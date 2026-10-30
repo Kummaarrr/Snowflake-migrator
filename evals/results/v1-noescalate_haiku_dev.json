@@ -1,0 +1,1601 @@
+{
+ "aggregate": {
+  "objects": 39,
+  "executes_pct": 100.0,
+  "matches_pct": 100.0,
+  "claimed_migrated_pct": 100.0,
+  "wrong_claimed_migrated": 0,
+  "needs_human_pct": 0.0,
+  "needs_human_but_fine": 0,
+  "calls_per_object": 0.74,
+  "seconds_per_object": 5.7,
+  "usd_per_object": 0.0007,
+  "by_kind": {
+   "query": {
+    "objects": 31,
+    "matches_pct": 100.0,
+    "wrong_claimed_migrated": 0
+   },
+   "etl": {
+    "objects": 2,
+    "matches_pct": 100.0,
+    "wrong_claimed_migrated": 0
+   },
+   "ddl": {
+    "objects": 6,
+    "matches_pct": 100.0,
+    "wrong_claimed_migrated": 0
+   }
+  }
+ },
+ "objects": [
+  {
+   "id": "Q02",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "2513 rows, 8 columns match",
+   "reason": "target result equals the source result (2513 rows, 8 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 2.380309300031513,
+   "cost_usd": 0,
+   "sql": "WITH wscs AS (\n  SELECT\n    sold_date_sk,\n    sales_price\n  FROM (\n    SELECT\n      ws_sold_date_sk AS sold_date_sk,\n      ws_ext_sales_price AS sales_price\n    FROM web_sales\n    UNION ALL\n    SELECT\n      cs_sold_date_sk AS sold_date_sk,\n      cs_ext_sales_price AS sales_price\n    FROM catalog_sales\n  ) AS sq1\n), wswscs AS (\n  SELECT\n    d_week_seq,\n    SUM(CASE WHEN (\n      d_day_name = 'Sunday'\n    ) THEN sales_price ELSE NULL END) AS sun_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Monday'\n    ) THEN sales_price ELSE NULL END) AS mon_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Tuesday'\n    ) THEN sales_price ELSE NULL END) AS tue_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Wednesday'\n    ) THEN sales_price ELSE NULL END) AS wed_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Thursday'\n    ) THEN sales_price ELSE NULL END) AS thu_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Friday'\n    ) THEN sales_price ELSE NULL END) AS fri_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Saturday'\n    ) THEN sales_price ELSE NULL END) AS sat_sales\n  FROM wscs\n  CROSS JOIN date_dim\n  WHERE\n    d_date_sk = sold_date_sk\n  GROUP BY\n    d_week_seq\n)\nSELECT\n  d_week_seq1,\n  ROUND(sun_sales1 / NULLIF(sun_sales2, 0), 2) AS r1,\n  ROUND(mon_sales1 / NULLIF(mon_sales2, 0), 2) AS r2,\n  ROUND(tue_sales1 / NULLIF(tue_sales2, 0), 2) AS r3,\n  ROUND(wed_sales1 / NULLIF(wed_sales2, 0), 2) AS r4,\n  ROUND(thu_sales1 / NULLIF(thu_sales2, 0), 2) AS r5,\n  ROUND(fri_sales1 / NULLIF(fri_sales2, 0), 2) AS r6,\n  ROUND(sat_sales1 / NULLIF(sat_sales2, 0), 2)\nFROM (\n  SELECT\n    wswscs.d_week_seq AS d_week_seq1,\n    sun_sales AS sun_sales1,\n    mon_sales AS mon_sales1,\n    tue_sales AS tue_sales1,\n    wed_sales AS wed_sales1,\n    thu_sales AS thu_sales1,\n    fri_sales AS fri_sales1,\n    sat_sales AS sat_sales1\n  FROM wswscs\n  CROSS JOIN date_dim\n  WHERE\n    date_dim.d_week_seq = wswscs.d_week_seq AND d_year = 2001\n) AS y\nCROSS JOIN (\n  SELECT\n    wswscs.d_week_seq AS d_week_seq2,\n    sun_sales AS sun_sales2,\n    mon_sales AS mon_sales2,\n    tue_sales AS tue_sales2,\n    wed_sales AS wed_sales2,\n    thu_sales AS thu_sales2,\n    fri_sales AS fri_sales2,\n    sat_sales AS sat_sales2\n  FROM wswscs\n  CROSS JOIN date_dim\n  WHERE\n    date_dim.d_week_seq = wswscs.d_week_seq AND d_year = 2001 + 1\n) AS z\nWHERE\n  d_week_seq1 = d_week_seq2 - 53\nORDER BY\n  d_week_seq1 NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "2513 rows, 8 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q03",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "15 rows, 4 columns match",
+   "reason": "target result equals the source result (15 rows, 4 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.31682259996887296,
+   "cost_usd": 0,
+   "sql": "SELECT\n  dt.d_year,\n  item.i_brand_id AS brand_id,\n  item.i_brand AS brand,\n  SUM(ss_ext_sales_price) AS sum_agg\nFROM date_dim AS dt\nCROSS JOIN store_sales\nCROSS JOIN item\nWHERE\n  dt.d_date_sk = store_sales.ss_sold_date_sk\n  AND store_sales.ss_item_sk = item.i_item_sk\n  AND item.i_manufact_id = 128\n  AND dt.d_moy = 11\nGROUP BY\n  dt.d_year,\n  item.i_brand,\n  item.i_brand_id\nORDER BY\n  dt.d_year,\n  sum_agg DESC NULLS LAST,\n  brand_id\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "15 rows, 4 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q06",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "12 rows, 2 columns match",
+   "reason": "target result equals the source result (12 rows, 2 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 10.844953900028486,
+   "cost_usd": 0.0010798,
+   "sql": "SELECT a.ca_state AS \"state\", COUNT(*) AS \"cnt\" FROM customer_address AS a CROSS JOIN customer AS c CROSS JOIN store_sales AS s CROSS JOIN date_dim AS d CROSS JOIN item AS i WHERE a.ca_address_sk = c.c_current_addr_sk AND c.c_customer_sk = s.ss_customer_sk AND s.ss_sold_date_sk = d.d_date_sk AND s.ss_item_sk = i.i_item_sk AND d.d_month_seq = (SELECT DISTINCT (d_month_seq) FROM date_dim WHERE d_year = 2001 AND d_moy = 1) AND i.i_current_price > 1.2 * (SELECT AVG(j.i_current_price) FROM item AS j WHERE j.i_category = i.i_category) GROUP BY a.ca_state HAVING COUNT(*) >= 10 ORDER BY \"cnt\" NULLS FIRST, a.ca_state NULLS FIRST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"customer_address\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"customer_address\". (request_id=bf726d8a-908f-43d4-85e8-3ca7361f5e8e, sfqid=01c8126e-000e-2246-0002-e98e0001222a)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double-quotes from table, column and alias references to table/column identifiers (quoted lowercase names are case-sensitive and did not match the uppercase unquoted objects); kept quoted output aliases \"state\"/\"cnt\" so result column names match Hive, and ORDER BY uses a.ca_state.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "12 rows, 2 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q09",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 5 columns match",
+   "reason": "target result equals the source result (1 rows, 5 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.3984883999801241,
+   "cost_usd": 0,
+   "sql": "SELECT\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 1 AND 20\n    ) > 74129\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 1 AND 20\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 1 AND 20\n    )\n  END AS bucket1,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 21 AND 40\n    ) > 122840\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 21 AND 40\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 21 AND 40\n    )\n  END AS bucket2,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 41 AND 60\n    ) > 56580\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 41 AND 60\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 41 AND 60\n    )\n  END AS bucket3,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 61 AND 80\n    ) > 10097\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 61 AND 80\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 61 AND 80\n    )\n  END AS bucket4,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 81 AND 100\n    ) > 165306\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 81 AND 100\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 81 AND 100\n    )\n  END AS bucket5\nFROM reason\nWHERE\n  r_reason_sk = 1",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "1 rows, 5 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q11",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "6 rows, 4 columns match",
+   "reason": "target result equals the source result (6 rows, 4 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.372577200003434,
+   "cost_usd": 0,
+   "sql": "WITH year_total AS (\n  SELECT\n    c_customer_id AS customer_id,\n    c_first_name AS customer_first_name,\n    c_last_name AS customer_last_name,\n    c_preferred_cust_flag AS customer_preferred_cust_flag,\n    c_birth_country AS customer_birth_country,\n    c_login AS customer_login,\n    c_email_address AS customer_email_address,\n    d_year AS dyear,\n    SUM(ss_ext_list_price - ss_ext_discount_amt) AS year_total,\n    's' AS sale_type\n  FROM customer\n  CROSS JOIN store_sales\n  CROSS JOIN date_dim\n  WHERE\n    c_customer_sk = ss_customer_sk AND ss_sold_date_sk = d_date_sk\n  GROUP BY\n    c_customer_id,\n    c_first_name,\n    c_last_name,\n    c_preferred_cust_flag,\n    c_birth_country,\n    c_login,\n    c_email_address,\n    d_year\n  UNION ALL\n  SELECT\n    c_customer_id AS customer_id,\n    c_first_name AS customer_first_name,\n    c_last_name AS customer_last_name,\n    c_preferred_cust_flag AS customer_preferred_cust_flag,\n    c_birth_country AS customer_birth_country,\n    c_login AS customer_login,\n    c_email_address AS customer_email_address,\n    d_year AS dyear,\n    SUM(ws_ext_list_price - ws_ext_discount_amt) AS year_total,\n    'w' AS sale_type\n  FROM customer\n  CROSS JOIN web_sales\n  CROSS JOIN date_dim\n  WHERE\n    c_customer_sk = ws_bill_customer_sk AND ws_sold_date_sk = d_date_sk\n  GROUP BY\n    c_customer_id,\n    c_first_name,\n    c_last_name,\n    c_preferred_cust_flag,\n    c_birth_country,\n    c_login,\n    c_email_address,\n    d_year\n)\nSELECT\n  t_s_secyear.customer_id,\n  t_s_secyear.customer_first_name,\n  t_s_secyear.customer_last_name,\n  t_s_secyear.customer_preferred_cust_flag\nFROM year_total AS t_s_firstyear\nCROSS JOIN year_total AS t_s_secyear\nCROSS JOIN year_total AS t_w_firstyear\nCROSS JOIN year_total AS t_w_secyear\nWHERE\n  t_s_secyear.customer_id = t_s_firstyear.customer_id\n  AND t_s_firstyear.customer_id = t_w_secyear.customer_id\n  AND t_s_firstyear.customer_id = t_w_firstyear.customer_id\n  AND t_s_firstyear.sale_type = 's'\n  AND t_w_firstyear.sale_type = 'w'\n  AND t_s_secyear.sale_type = 's'\n  AND t_w_secyear.sale_type = 'w'\n  AND t_s_firstyear.dyear = 2001\n  AND t_s_secyear.dyear = 2001 + 1\n  AND t_w_firstyear.dyear = 2001\n  AND t_w_secyear.dyear = 2001 + 1\n  AND t_s_firstyear.year_total > 0\n  AND t_w_firstyear.year_total > 0\n  AND CASE\n    WHEN t_w_firstyear.year_total > 0\n    THEN (\n      t_w_secyear.year_total * 1.0000\n    ) / NULLIF(t_w_firstyear.year_total, 0)\n    ELSE 0.0\n  END > CASE\n    WHEN t_s_firstyear.year_total > 0\n    THEN (\n      t_s_secyear.year_total * 1.0000\n    ) / NULLIF(t_s_firstyear.year_total, 0)\n    ELSE 0.0\n  END\nORDER BY\n  t_s_secyear.customer_id NULLS FIRST,\n  t_s_secyear.customer_first_name NULLS FIRST,\n  t_s_secyear.customer_last_name NULLS FIRST,\n  t_s_secyear.customer_preferred_cust_flag NULLS FIRST\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "6 rows, 4 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q12",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "target result equals the source result (100 rows, 7 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.5549498000182211,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  i_item_desc,\n  i_category,\n  i_class,\n  i_current_price,\n  SUM(ws_ext_sales_price) AS itemrevenue,\n  SUM(ws_ext_sales_price) * 100.0000 / NULLIF(SUM(SUM(ws_ext_sales_price)) OVER (PARTITION BY i_class), 0) AS revenueratio\nFROM web_sales\nCROSS JOIN item\nCROSS JOIN date_dim\nWHERE\n  ws_item_sk = i_item_sk\n  AND i_category IN ('Sports', 'Books', 'Home')\n  AND ws_sold_date_sk = d_date_sk\n  AND d_date BETWEEN TRY_CAST('1999-02-22' AS DATE) AND TRY_CAST('1999-03-24' AS DATE)\nGROUP BY\n  i_item_id,\n  i_item_desc,\n  i_category,\n  i_class,\n  i_current_price\nORDER BY\n  i_category,\n  i_class,\n  i_item_id,\n  i_item_desc,\n  revenueratio\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "100 rows, 7 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q16",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 3 columns match",
+   "reason": "target result equals the source result (1 rows, 3 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 9.908679199987091,
+   "cost_usd": 0.0010974000000000001,
+   "sql": "SELECT COUNT(DISTINCT cs_order_number) AS \"order count\", SUM(cs_ext_ship_cost) AS \"total shipping cost\", SUM(cs_net_profit) AS \"total net profit\" FROM catalog_sales AS cs1 CROSS JOIN date_dim CROSS JOIN customer_address CROSS JOIN call_center WHERE d_date BETWEEN '2002-02-01' AND TRY_CAST('2002-04-02' AS DATE) AND cs1.cs_ship_date_sk = d_date_sk AND cs1.cs_ship_addr_sk = ca_address_sk AND ca_state = 'GA' AND cs1.cs_call_center_sk = cc_call_center_sk AND cc_county = 'Williamson County' AND EXISTS (SELECT * FROM catalog_sales AS cs2 WHERE cs1.cs_order_number = cs2.cs_order_number AND cs1.cs_warehouse_sk <> cs2.cs_warehouse_sk) AND NOT EXISTS (SELECT * FROM catalog_returns AS cr1 WHERE cs1.cs_order_number = cr1.cr_order_number) ORDER BY COUNT(DISTINCT cs_order_number) NULLS LAST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"customer_address\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"customer_address\". (request_id=e5704a1d-6bde-4a9d-9c39-6a502a87e815, sfqid=01c8126e-000e-2246-0002-e98e0001223e)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double quotes from table and column identifiers (quoted lowercase names like \"customer_address\" don't match Snowflake's unquoted uppercase objects) and restored the NULLS LAST ordering from the Hive source; quoted aliases are kept.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "1 rows, 3 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q17",
+   "kind": "query",
+   "features": [
+    "tpcds"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 15 columns match",
+   "reason": "target result equals the source result (1 rows, 15 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.35477269999682903,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  i_item_desc,\n  s_state,\n  COUNT(ss_quantity) AS store_sales_quantitycount,\n  AVG(ss_quantity) AS store_sales_quantityave,\n  STDDEV_SAMP(ss_quantity) AS store_sales_quantitystdev,\n  STDDEV_SAMP(ss_quantity) / NULLIF(AVG(ss_quantity), 0) AS store_sales_quantitycov,\n  COUNT(sr_return_quantity) AS store_returns_quantitycount,\n  AVG(sr_return_quantity) AS store_returns_quantityave,\n  STDDEV_SAMP(sr_return_quantity) AS store_returns_quantitystdev,\n  STDDEV_SAMP(sr_return_quantity) / NULLIF(AVG(sr_return_quantity), 0) AS store_returns_quantitycov,\n  COUNT(cs_quantity) AS catalog_sales_quantitycount,\n  AVG(cs_quantity) AS catalog_sales_quantityave,\n  STDDEV_SAMP(cs_quantity) AS catalog_sales_quantitystdev,\n  STDDEV_SAMP(cs_quantity) / NULLIF(AVG(cs_quantity), 0) AS catalog_sales_quantitycov\nFROM store_sales\nCROSS JOIN store_returns\nCROSS JOIN catalog_sales\nCROSS JOIN date_dim AS d1\nCROSS JOIN date_dim AS d2\nCROSS JOIN date_dim AS d3\nCROSS JOIN store\nCROSS JOIN item\nWHERE\n  d1.d_quarter_name = '2001Q1'\n  AND d1.d_date_sk = ss_sold_date_sk\n  AND i_item_sk = ss_item_sk\n  AND s_store_sk = ss_store_sk\n  AND ss_customer_sk = sr_customer_sk\n  AND ss_item_sk = sr_item_sk\n  AND ss_ticket_number = sr_ticket_number\n  AND sr_returned_date_sk = d2.d_date_sk\n  AND d2.d_quarter_name IN ('2001Q1', '2001Q2', '2001Q3')\n  AND sr_customer_sk = cs_bill_customer_sk\n  AND sr_item_sk = cs_item_sk\n  AND cs_sold_date_sk = d3.d_date_sk\n  AND d3.d_quarter_name IN ('2001Q1', '2001Q2', '2001Q3')\nGROUP BY\n  i_item_id,\n  i_item_desc,\n  s_state\nORDER BY\n  i_item_id NULLS FIRST,\n  i_item_desc NULLS FIRST,\n  s_state NULLS FIRST\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "1 rows, 15 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q18",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "rollup",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 11 columns match",
+   "reason": "target result equals the source result (100 rows, 11 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 8.852499199972954,
+   "cost_usd": 0.0014382,
+   "sql": "SELECT i_item_id, ca_country, ca_state, ca_county, AVG(CAST(cs_quantity AS DECIMAL(12, 2))) AS agg1, AVG(CAST(cs_list_price AS DECIMAL(12, 2))) AS agg2, AVG(CAST(cs_coupon_amt AS DECIMAL(12, 2))) AS agg3, AVG(CAST(cs_sales_price AS DECIMAL(12, 2))) AS agg4, AVG(CAST(cs_net_profit AS DECIMAL(12, 2))) AS agg5, AVG(CAST(c_birth_year AS DECIMAL(12, 2))) AS agg6, AVG(CAST(cd1.cd_dep_count AS DECIMAL(12, 2))) AS agg7 FROM catalog_sales CROSS JOIN customer_demographics AS cd1 CROSS JOIN customer_demographics AS cd2 CROSS JOIN customer CROSS JOIN customer_address CROSS JOIN date_dim CROSS JOIN item WHERE cs_sold_date_sk = d_date_sk AND cs_item_sk = i_item_sk AND cs_bill_cdemo_sk = cd1.cd_demo_sk AND cs_bill_customer_sk = c_customer_sk AND cd1.cd_gender = 'F' AND cd1.cd_education_status = 'Unknown' AND c_current_cdemo_sk = cd2.cd_demo_sk AND c_current_addr_sk = ca_address_sk AND c_birth_month IN (1, 6, 8, 9, 12, 2) AND d_year = 1998 AND ca_state IN ('MS', 'IN', 'ND', 'OK', 'NM', 'VA', 'MS') GROUP BY ROLLUP (i_item_id, ca_country, ca_state, ca_county) ORDER BY ca_country NULLS FIRST, ca_state NULLS FIRST, ca_county NULLS FIRST, i_item_id NULLS FIRST, GROUPING(ca_country) NULLS FIRST, GROUPING(ca_state) NULLS FIRST, GROUPING(ca_county) NULLS FIRST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"catalog_sales\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"catalog_sales\". (request_id=8d9dab90-990d-48ad-8401-ade8698e95ba, sfqid=01c8126f-000e-2246-0002-e98e0001224a)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the double-quote identifiers that were wrapping lowercase names (Snowflake treats quoted names as case-sensitive, so \"catalog_sales\" did not match the unquoted CATALOG_SALES table); all identifiers are now unquoted, with the logic otherwise unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "100 rows, 11 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q19",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive",
+    "substr"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "10 rows, 5 columns match",
+   "reason": "target result equals the source result (10 rows, 5 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 9.327614099951461,
+   "cost_usd": 0.0009485,
+   "sql": "SELECT i_brand_id AS brand_id, i_brand AS \"brand\", i_manufact_id, i_manufact, SUM(ss_ext_sales_price) AS ext_price FROM date_dim CROSS JOIN store_sales CROSS JOIN item CROSS JOIN customer CROSS JOIN customer_address CROSS JOIN store WHERE d_date_sk = ss_sold_date_sk AND ss_item_sk = i_item_sk AND i_manager_id = 8 AND d_moy = 11 AND d_year = 1998 AND ss_customer_sk = c_customer_sk AND c_current_addr_sk = ca_address_sk AND SUBSTRING(ca_zip, 1, 5) <> SUBSTRING(s_zip, 1, 5) AND ss_store_sk = s_store_sk GROUP BY i_brand, i_brand_id, i_manufact_id, i_manufact ORDER BY ext_price DESC NULLS LAST, i_brand NULLS LAST, i_brand_id NULLS LAST, i_manufact_id NULLS LAST, i_manufact NULLS LAST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"store\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"store\". (request_id=b3d52d48-3d9f-4e30-b6d7-2cee70e01630, sfqid=01c8126f-000e-2246-0002-e98e0001224e)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the double-quote wrapping from unquoted Hive identifiers (e.g. \"store\", \"d_date_sk\", \"i_brand_id\") so Snowflake folds them to the same uppercase names as the tables and columns, fixing the missing-object error; the output alias \"brand\" is kept quoted to preserve the lowercase column name, and NULLS LAST is made explicit on all ORDER BY keys to match Hive ordering.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "10 rows, 5 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q20",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "target result equals the source result (100 rows, 7 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 8.3107923999778,
+   "cost_usd": 0.0008985,
+   "sql": "SELECT i_item_id, i_item_desc, i_category, i_class, i_current_price, SUM(cs_ext_sales_price) AS itemrevenue, SUM(cs_ext_sales_price) * 100.0000 / NULLIF(SUM(SUM(cs_ext_sales_price)) OVER (PARTITION BY i_class), 0) AS revenueratio FROM catalog_sales CROSS JOIN item CROSS JOIN date_dim WHERE cs_item_sk = i_item_sk AND i_category IN ('Sports', 'Books', 'Home') AND cs_sold_date_sk = d_date_sk AND d_date BETWEEN TRY_CAST('1999-02-22' AS DATE) AND TRY_CAST('1999-03-24' AS DATE) GROUP BY i_item_id, i_item_desc, i_category, i_class, i_current_price ORDER BY i_category NULLS FIRST, i_class NULLS FIRST, i_item_id NULLS FIRST, i_item_desc NULLS FIRST, revenueratio NULLS FIRST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "000904 (42000): SQL compilation error: error line 3 at position 2 invalid identifier '\"i_item_desc\"' (request_id=02fba1ca-b424-4dd1-96ab-3a8dcae2618f, sfqid=01c8126f-000e-2229-0000-0002e98e5bb9)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the double quotes around column names (converted from Hive backticks); Snowflake stores unquoted identifiers as uppercase, so the quoted lowercase names did not match and caused the invalid identifier error.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "100 rows, 7 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q21",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "32 rows, 4 columns match",
+   "reason": "target result equals the source result (32 rows, 4 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.31734979996690527,
+   "cost_usd": 0,
+   "sql": "SELECT\n  *\nFROM (\n  SELECT\n    w_warehouse_name,\n    i_item_id,\n    SUM(\n      CASE\n        WHEN (\n          CAST(d_date AS DATE) < TRY_CAST('2000-03-11' AS DATE)\n        )\n        THEN inv_quantity_on_hand\n        ELSE 0\n      END\n    ) AS inv_before,\n    SUM(\n      CASE\n        WHEN (\n          CAST(d_date AS DATE) >= TRY_CAST('2000-03-11' AS DATE)\n        )\n        THEN inv_quantity_on_hand\n        ELSE 0\n      END\n    ) AS inv_after\n  FROM inventory\n  CROSS JOIN warehouse\n  CROSS JOIN item\n  CROSS JOIN date_dim\n  WHERE\n    i_current_price BETWEEN 0.99 AND 1.49\n    AND i_item_sk = inv_item_sk\n    AND inv_warehouse_sk = w_warehouse_sk\n    AND inv_date_sk = d_date_sk\n    AND d_date BETWEEN TRY_CAST('2000-02-10' AS DATE) AND TRY_CAST('2000-04-10' AS DATE)\n  GROUP BY\n    w_warehouse_name,\n    i_item_id\n) AS x\nWHERE\n  (\n    CASE\n      WHEN inv_before > 0\n      THEN (\n        inv_after * 1.000\n      ) / NULLIF(inv_before, 0)\n      ELSE NULL\n    END\n  ) BETWEEN 2.000 / NULLIF(3.000, 0) AND 3.000 / NULLIF(2.000, 0)\nORDER BY\n  w_warehouse_name NULLS FIRST,\n  i_item_id NULLS FIRST\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "32 rows, 4 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q26",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 5 columns match",
+   "reason": "target result equals the source result (100 rows, 5 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 5.4570761999930255,
+   "cost_usd": 0.0008121000000000001,
+   "sql": "SELECT i_item_id, AVG(cs_quantity) AS agg1, AVG(cs_list_price) AS agg2, AVG(cs_coupon_amt) AS agg3, AVG(cs_sales_price) AS agg4 FROM catalog_sales CROSS JOIN customer_demographics CROSS JOIN date_dim CROSS JOIN item CROSS JOIN promotion WHERE cs_sold_date_sk = d_date_sk AND cs_item_sk = i_item_sk AND cs_bill_cdemo_sk = cd_demo_sk AND cs_promo_sk = p_promo_sk AND cd_gender = 'M' AND cd_marital_status = 'S' AND cd_education_status = 'College' AND (p_channel_email = 'N' OR p_channel_event = 'N') AND d_year = 2000 GROUP BY i_item_id ORDER BY i_item_id NULLS LAST LIMIT 100;",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"catalog_sales\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"catalog_sales\". (request_id=4d3eb3a5-2eb1-4232-b511-ae4e7767d599, sfqid=01c8126f-000e-2229-0000-0002e98e5bc1)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the double quotes and backticks from all identifiers, since quoted lowercase names are case-sensitive and do not match the uppercase unquoted table/column names in Snowflake; kept NULLS LAST and the rest of the logic unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "100 rows, 5 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q27",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "target result equals the source result (100 rows, 7 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.34751150000374764,
+   "cost_usd": 0,
+   "sql": "WITH results AS (\n  SELECT\n    i_item_id,\n    s_state,\n    0 AS g_state,\n    ss_quantity AS agg1,\n    ss_list_price AS agg2,\n    ss_coupon_amt AS agg3,\n    ss_sales_price AS agg4\n  FROM store_sales\n  CROSS JOIN customer_demographics\n  CROSS JOIN date_dim\n  CROSS JOIN store\n  CROSS JOIN item\n  WHERE\n    ss_sold_date_sk = d_date_sk\n    AND ss_item_sk = i_item_sk\n    AND ss_store_sk = s_store_sk\n    AND ss_cdemo_sk = cd_demo_sk\n    AND cd_gender = 'M'\n    AND cd_marital_status = 'S'\n    AND cd_education_status = 'College'\n    AND d_year = 2002\n    AND s_state = 'TN'\n)\nSELECT\n  i_item_id,\n  s_state,\n  g_state,\n  agg1,\n  agg2,\n  agg3,\n  agg4\nFROM (\n  SELECT\n    i_item_id,\n    s_state,\n    0 AS g_state,\n    AVG(agg1) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n  GROUP BY\n    i_item_id,\n    s_state\n  UNION ALL\n  SELECT\n    i_item_id,\n    NULL AS s_state,\n    1 AS g_state,\n    AVG(agg1) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n  GROUP BY\n    i_item_id\n  UNION ALL\n  SELECT\n    NULL AS i_item_id,\n    NULL AS s_state,\n    1 AS g_state,\n    AVG(agg1) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n) AS foo\nORDER BY\n  i_item_id NULLS FIRST,\n  s_state NULLS FIRST\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "100 rows, 7 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q31",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "cte"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "3 rows, 6 columns match",
+   "reason": "target result equals the source result (3 rows, 6 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 9.077673099993262,
+   "cost_usd": 0.0016258,
+   "sql": "WITH ss AS (SELECT ca_county, d_qoy, d_year, SUM(ss_ext_sales_price) AS store_sales FROM store_sales CROSS JOIN date_dim CROSS JOIN customer_address WHERE ss_sold_date_sk = d_date_sk AND ss_addr_sk = ca_address_sk GROUP BY ca_county, d_qoy, d_year), ws AS (SELECT ca_county, d_qoy, d_year, SUM(ws_ext_sales_price) AS web_sales FROM web_sales CROSS JOIN date_dim CROSS JOIN customer_address WHERE ws_sold_date_sk = d_date_sk AND ws_bill_addr_sk = ca_address_sk GROUP BY ca_county, d_qoy, d_year) SELECT ss1.ca_county, ss1.d_year, (ws2.web_sales * 1.0000) / NULLIF(ws1.web_sales, 0) AS web_q1_q2_increase, (ss2.store_sales * 1.0000) / NULLIF(ss1.store_sales, 0) AS store_q1_q2_increase, (ws3.web_sales * 1.0000) / NULLIF(ws2.web_sales, 0) AS web_q2_q3_increase, (ss3.store_sales * 1.0000) / NULLIF(ss2.store_sales, 0) AS store_q2_q3_increase FROM ss AS ss1 CROSS JOIN ss AS ss2 CROSS JOIN ss AS ss3 CROSS JOIN ws AS ws1 CROSS JOIN ws AS ws2 CROSS JOIN ws AS ws3 WHERE ss1.d_qoy = 1 AND ss1.d_year = 2000 AND ss1.ca_county = ss2.ca_county AND ss2.d_qoy = 2 AND ss2.d_year = 2000 AND ss2.ca_county = ss3.ca_county AND ss3.d_qoy = 3 AND ss3.d_year = 2000 AND ss1.ca_county = ws1.ca_county AND ws1.d_qoy = 1 AND ws1.d_year = 2000 AND ws1.ca_county = ws2.ca_county AND ws2.d_qoy = 2 AND ws2.d_year = 2000 AND ws1.ca_county = ws3.ca_county AND ws3.d_qoy = 3 AND ws3.d_year = 2000 AND CASE WHEN ws1.web_sales > 0 THEN (ws2.web_sales * 1.0000) / NULLIF(ws1.web_sales, 0) ELSE NULL END > CASE WHEN ss1.store_sales > 0 THEN (ss2.store_sales * 1.0000) / NULLIF(ss1.store_sales, 0) ELSE NULL END AND CASE WHEN ws2.web_sales > 0 THEN (ws3.web_sales * 1.0000) / NULLIF(ws2.web_sales, 0) ELSE NULL END > CASE WHEN ss2.store_sales > 0 THEN (ss3.store_sales * 1.0000) / NULLIF(ss2.store_sales, 0) ELSE NULL END ORDER BY ss1.ca_county NULLS LAST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"store_sales\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"store_sales\". (request_id=a8a11ee2-a07f-411a-905a-c032e5cedbf5, sfqid=01c8126f-000e-2246-0002-e98e0001226e)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double quotes from all table and column identifiers (they were quoted lowercase, so Snowflake looked for case-sensitive STORE_SALES-style names that do not exist); identifiers are now unquoted and case-insensitive as in Hive, with the rest of the logic unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "3 rows, 6 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q33",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 2 columns match",
+   "reason": "target result equals the source result (100 rows, 2 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.3792912000208162,
+   "cost_usd": 0,
+   "sql": "WITH ss AS (\n  SELECT\n    i_manufact_id,\n    SUM(ss_ext_sales_price) AS total_sales\n  FROM store_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  CROSS JOIN item\n  WHERE\n    i_manufact_id IN (\n      SELECT\n        i_manufact_id\n      FROM item\n      WHERE\n        i_category IN ('Electronics')\n    )\n    AND ss_item_sk = i_item_sk\n    AND ss_sold_date_sk = d_date_sk\n    AND d_year = 1998\n    AND d_moy = 5\n    AND ss_addr_sk = ca_address_sk\n    AND ca_gmt_offset = -5\n  GROUP BY\n    i_manufact_id\n), cs AS (\n  SELECT\n    i_manufact_id,\n    SUM(cs_ext_sales_price) AS total_sales\n  FROM catalog_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  CROSS JOIN item\n  WHERE\n    i_manufact_id IN (\n      SELECT\n        i_manufact_id\n      FROM item\n      WHERE\n        i_category IN ('Electronics')\n    )\n    AND cs_item_sk = i_item_sk\n    AND cs_sold_date_sk = d_date_sk\n    AND d_year = 1998\n    AND d_moy = 5\n    AND cs_bill_addr_sk = ca_address_sk\n    AND ca_gmt_offset = -5\n  GROUP BY\n    i_manufact_id\n), ws AS (\n  SELECT\n    i_manufact_id,\n    SUM(ws_ext_sales_price) AS total_sales\n  FROM web_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  CROSS JOIN item\n  WHERE\n    i_manufact_id IN (\n      SELECT\n        i_manufact_id\n      FROM item\n      WHERE\n        i_category IN ('Electronics')\n    )\n    AND ws_item_sk = i_item_sk\n    AND ws_sold_date_sk = d_date_sk\n    AND d_year = 1998\n    AND d_moy = 5\n    AND ws_bill_addr_sk = ca_address_sk\n    AND ca_gmt_offset = -5\n  GROUP BY\n    i_manufact_id\n)\nSELECT\n  i_manufact_id,\n  SUM(total_sales) AS total_sales\nFROM (\n  SELECT\n    *\n  FROM ss\n  UNION ALL\n  SELECT\n    *\n  FROM cs\n  UNION ALL\n  SELECT\n    *\n  FROM ws\n) AS tmp1\nGROUP BY\n  i_manufact_id\nORDER BY\n  total_sales\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "100 rows, 2 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q39",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 10 columns match",
+   "reason": "target result equals the source result (5 rows, 10 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.316338500007987,
+   "cost_usd": 0,
+   "sql": "WITH inv AS (\n  SELECT\n    w_warehouse_name,\n    w_warehouse_sk,\n    i_item_sk,\n    d_moy,\n    stdev,\n    mean,\n    CASE mean WHEN 0 THEN NULL ELSE stdev / NULLIF(mean, 0) END AS cov\n  FROM (\n    SELECT\n      w_warehouse_name,\n      w_warehouse_sk,\n      i_item_sk,\n      d_moy,\n      STDDEV_SAMP(inv_quantity_on_hand) * 1.000 AS stdev,\n      AVG(inv_quantity_on_hand) AS mean\n    FROM inventory\n    CROSS JOIN item\n    CROSS JOIN warehouse\n    CROSS JOIN date_dim\n    WHERE\n      inv_item_sk = i_item_sk\n      AND inv_warehouse_sk = w_warehouse_sk\n      AND inv_date_sk = d_date_sk\n      AND d_year = 2001\n    GROUP BY\n      w_warehouse_name,\n      w_warehouse_sk,\n      i_item_sk,\n      d_moy\n  ) AS foo\n  WHERE\n    CASE mean WHEN 0 THEN 0 ELSE stdev / NULLIF(mean, 0) END > 1\n)\nSELECT\n  inv1.w_warehouse_sk AS wsk1,\n  inv1.i_item_sk AS isk1,\n  inv1.d_moy AS dmoy1,\n  inv1.mean AS mean1,\n  inv1.cov AS cov1,\n  inv2.w_warehouse_sk,\n  inv2.i_item_sk,\n  inv2.d_moy,\n  inv2.mean,\n  inv2.cov\nFROM inv AS inv1\nCROSS JOIN inv AS inv2\nWHERE\n  inv1.i_item_sk = inv2.i_item_sk\n  AND inv1.w_warehouse_sk = inv2.w_warehouse_sk\n  AND inv1.d_moy = 1\n  AND inv2.d_moy = 1 + 1\nORDER BY\n  inv1.w_warehouse_sk NULLS FIRST,\n  inv1.i_item_sk NULLS FIRST,\n  inv1.d_moy NULLS FIRST,\n  inv1.mean NULLS FIRST,\n  inv1.cov NULLS FIRST,\n  inv2.d_moy NULLS FIRST,\n  inv2.mean NULLS FIRST,\n  inv2.cov NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "5 rows, 10 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q40",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "nvl",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "44 rows, 4 columns match",
+   "reason": "target result equals the source result (44 rows, 4 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 13.238360800023656,
+   "cost_usd": 0.0013324,
+   "sql": "SELECT w_state, i_item_id, SUM(CASE WHEN (CAST(d_date AS DATE) < CAST('2000-03-11' AS DATE)) THEN cs_sales_price - COALESCE(cr_refunded_cash, 0) ELSE 0 END) AS \"sales_before\", SUM(CASE WHEN (CAST(d_date AS DATE) >= CAST('2000-03-11' AS DATE)) THEN cs_sales_price - COALESCE(cr_refunded_cash, 0) ELSE 0 END) AS \"sales_after\" FROM catalog_sales LEFT OUTER JOIN catalog_returns ON (cs_order_number = cr_order_number AND cs_item_sk = cr_item_sk) CROSS JOIN warehouse CROSS JOIN item CROSS JOIN date_dim WHERE i_current_price BETWEEN 0.99 AND 1.49 AND i_item_sk = cs_item_sk AND cs_warehouse_sk = w_warehouse_sk AND cs_sold_date_sk = d_date_sk AND d_date BETWEEN CAST('2000-02-10' AS DATE) AND CAST('2000-04-10' AS DATE) GROUP BY w_state, i_item_id ORDER BY w_state NULLS LAST, i_item_id NULLS LAST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"item\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"item\". (request_id=b75262a8-ac82-4edd-aec8-e51766394024, sfqid=01c8126f-000e-2229-0000-0002e98e5bd5)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the wrongly quoted lowercase identifiers (\"item\", \"i_item_sk\", \"cs_sales_price\", etc.) that Snowflake treats as case-sensitive and cannot find; restored NULLS LAST in ORDER BY to match Hive null ordering, and kept CAST instead of TRY_CAST to match Hive's behavior.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "44 rows, 4 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q42",
+   "kind": "query",
+   "features": [
+    "tpcds"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 rows, 4 columns match",
+   "reason": "target result equals the source result (4 rows, 4 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.3616883000358939,
+   "cost_usd": 0,
+   "sql": "SELECT\n  dt.d_year,\n  item.i_category_id,\n  item.i_category,\n  SUM(ss_ext_sales_price)\nFROM date_dim AS dt\nCROSS JOIN store_sales\nCROSS JOIN item\nWHERE\n  dt.d_date_sk = store_sales.ss_sold_date_sk\n  AND store_sales.ss_item_sk = item.i_item_sk\n  AND item.i_manager_id = 1\n  AND dt.d_moy = 11\n  AND dt.d_year = 2000\nGROUP BY\n  dt.d_year,\n  item.i_category_id,\n  item.i_category\nORDER BY\n  SUM(ss_ext_sales_price) DESC NULLS LAST,\n  dt.d_year,\n  item.i_category_id,\n  item.i_category\nLIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "4 rows, 4 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q45",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "substr"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 3 columns match",
+   "reason": "target result equals the source result (24 rows, 3 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 6.370609500037972,
+   "cost_usd": 0.0008999,
+   "sql": "SELECT ca_zip, ca_city, SUM(ws_sales_price) FROM web_sales CROSS JOIN customer CROSS JOIN customer_address CROSS JOIN date_dim CROSS JOIN item WHERE ws_bill_customer_sk = c_customer_sk AND c_current_addr_sk = ca_address_sk AND ws_item_sk = i_item_sk AND (SUBSTRING(ca_zip, 1, 5) IN ('85669', '86197', '88274', '83405', '86475', '85392', '85460', '80348', '81792') OR i_item_id IN (SELECT i_item_id FROM item WHERE i_item_sk IN (2, 3, 5, 7, 11, 13, 17, 19, 23, 29))) AND ws_sold_date_sk = d_date_sk AND d_qoy = 2 AND d_year = 2001 GROUP BY ca_zip, ca_city ORDER BY ca_zip NULLS LAST, ca_city NULLS LAST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"web_sales\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"web_sales\". (request_id=ed849a98-db17-474d-bc9e-c8f51eea0288, sfqid=01c81270-000e-2246-0002-e98e0001228e)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double quotes from all identifiers so Snowflake folds them to uppercase and matches the unquoted-created WEB_SALES etc. (Hive backticks are case-insensitive), and restored the explicit NULLS LAST from the Hive ORDER BY.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "24 rows, 3 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q46",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "target result equals the source result (100 rows, 7 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 8.897861300036311,
+   "cost_usd": 0.0010193,
+   "sql": "SELECT c_last_name, c_first_name, ca_city, bought_city, ss_ticket_number, amt, profit FROM (SELECT ss_ticket_number, ss_customer_sk, ca_city AS bought_city, SUM(ss_coupon_amt) AS amt, SUM(ss_net_profit) AS profit FROM store_sales CROSS JOIN date_dim CROSS JOIN store CROSS JOIN household_demographics CROSS JOIN customer_address WHERE store_sales.ss_sold_date_sk = date_dim.d_date_sk AND store_sales.ss_store_sk = store.s_store_sk AND store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk AND store_sales.ss_addr_sk = customer_address.ca_address_sk AND (household_demographics.hd_dep_count = 4 OR household_demographics.hd_vehicle_count = 3) AND date_dim.d_dow IN (6, 0) AND date_dim.d_year IN (1999, 1999 + 1, 1999 + 2) AND store.s_city IN ('Fairview', 'Midway') GROUP BY ss_ticket_number, ss_customer_sk, ss_addr_sk, ca_city) AS dn CROSS JOIN customer CROSS JOIN customer_address AS current_addr WHERE ss_customer_sk = c_customer_sk AND customer.c_current_addr_sk = current_addr.ca_address_sk AND current_addr.ca_city <> bought_city ORDER BY c_last_name NULLS FIRST, c_first_name NULLS FIRST, ca_city NULLS FIRST, bought_city NULLS FIRST, ss_ticket_number NULLS FIRST LIMIT 100",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"date_dim\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"date_dim\". (request_id=d3a05211-8390-49fe-8cf5-331d5be365ff, sfqid=01c81270-000e-2246-0002-e98e00012296)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double quotes from all identifiers: quoted lowercase names like \"date_dim\" don't match Snowflake's uppercase-stored unquoted objects, and Hive identifiers are case-insensitive, so unquoted names resolve correctly.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "100 rows, 7 columns match"
+    }
+   ]
+  },
+  {
+   "id": "Q47",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "cte",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 10 columns match",
+   "reason": "target result equals the source result (100 rows, 10 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 11.12553379999008,
+   "cost_usd": 0.0012785,
+   "sql": "WITH v1 AS (SELECT i_category, i_brand, s_store_name, s_company_name, d_year, d_moy, SUM(ss_sales_price) AS sum_sales, AVG(SUM(ss_sales_price)) OVER (PARTITION BY i_category, i_brand, s_store_name, s_company_name, d_year) AS avg_monthly_sales, RANK() OVER (PARTITION BY i_category, i_brand, s_store_name, s_company_name ORDER BY d_year NULLS LAST, d_moy NULLS LAST) AS rn FROM item CROSS JOIN store_sales CROSS JOIN date_dim CROSS JOIN store WHERE ss_item_sk = i_item_sk AND ss_sold_date_sk = d_date_sk AND ss_store_sk = s_store_sk AND (d_year = 1999 OR (d_year = 1999 - 1 AND d_moy = 12) OR (d_year = 1999 + 1 AND d_moy = 1)) GROUP BY i_category, i_brand, s_store_name, s_company_name, d_year, d_moy), v2 AS (SELECT v1.i_category, v1.i_brand, v1.s_store_name, v1.s_company_name, v1.d_year, v1.d_moy, v1.avg_monthly_sales, v1.sum_sales, v1_lag.sum_sales AS psum, v1_lead.sum_sales AS nsum FROM v1 CROSS JOIN v1 AS v1_lag CROSS JOIN v1 AS v1_lead WHERE v1.i_category = v1_lag.i_category AND v1.i_category = v1_lead.i_category AND v1.i_brand = v1_lag.i_brand AND v1.i_brand = v1_lead.i_brand AND v1.s_store_name = v1_lag.s_store_name AND v1.s_store_name = v1_lead.s_store_name AND v1.s_company_name = v1_lag.s_company_name AND v1.s_company_name = v1_lead.s_company_name AND v1.rn = v1_lag.rn + 1 AND v1.rn = v1_lead.rn - 1) SELECT * FROM v2 WHERE d_year = 1999 AND avg_monthly_sales > 0 AND CASE WHEN avg_monthly_sales > 0 THEN ABS(sum_sales - avg_monthly_sales) / NULLIF(avg_monthly_sales, 0) ELSE NULL END > 0.1 ORDER BY sum_sales - avg_monthly_sales NULLS LAST, 1 NULLS LAST, 2 NULLS LAST, 3 NULLS LAST, 4 NULLS LAST, 5 NULLS LAST, 6 NULLS LAST, 7 NULLS LAST, 8 NULLS LAST, 9 NULLS LAST, 10 NULLS LAST LIMIT 100;",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "000904 (42000): SQL compilation error: error line 7 at position 4 invalid identifier '\"d_year\"' (request_id=37f72e2b-2424-4703-bb6d-fd3292565b55, sfqid=01c81270-000e-2229-0000-0002e98e5be1)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double-quote identifiers (Snowflake treats quoted names as case-sensitive so \"d_year\" did not match the unquoted column D_YEAR) and restored the NULLS LAST ordering from the Hive source.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "100 rows, 10 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L01",
+   "kind": "query",
+   "features": [
+    "lateral_view",
+    "explode",
+    "collect_set",
+    "size",
+    "cast_string"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 3 columns match",
+   "reason": "target result equals the source result (5 rows, 3 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 6.80580930004362,
+   "cost_usd": 0.0007005,
+   "sql": "/* top items per store as a delimited string, then exploded back to rows (legacy report feed) */ SELECT t.ss_store_sk, e.value::STRING AS item_id, ARRAY_SIZE(t.items) AS n_items FROM (SELECT ss_store_sk, ARRAY_UNIQUE_AGG(CAST(ss_item_sk AS VARCHAR)) AS items FROM store_sales WHERE ss_sold_date_sk = 2451545 AND ss_item_sk <= 60 GROUP BY ss_store_sk) AS t, LATERAL FLATTEN(INPUT => t.items) e ORDER BY t.ss_store_sk NULLS FIRST, CAST(e.value::STRING AS INT) NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001003 (42000): SQL compilation error: syntax error line 15 at position 0 unexpected 'LATERAL'. (request_id=47dd6f04-36d3-40a5-a843-4dc08929a347, sfqid=01c81270-000e-2246-0002-e98e000122a6)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Replaced the Hive LATERAL VIEW explode with a comma-joined LATERAL FLATTEN(INPUT => t.items), took the element from e.value cast to STRING as item_id, and ordered by the cast of that value to INT.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "5 rows, 3 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L02",
+   "kind": "query",
+   "features": [
+    "collect_set",
+    "sort_array",
+    "concat_ws",
+    "having"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 3 columns match",
+   "reason": "target result equals the source result (5 rows, 3 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 6.553491899976507,
+   "cost_usd": 0.0007027000000000001,
+   "sql": "SELECT c.c_customer_id, ARRAY_TO_STRING(ARRAY_SORT(ARRAY_UNIQUE_AGG(i.i_category), TRUE, TRUE), '|') AS categories, COUNT(DISTINCT i.i_category) AS n_cat FROM store_sales AS ss JOIN customer AS c ON c.c_customer_sk = ss.ss_customer_sk JOIN item AS i ON i.i_item_sk = ss.ss_item_sk WHERE ss.ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND c.c_customer_sk < 400 GROUP BY c.c_customer_id HAVING COUNT(DISTINCT i.i_category) >= 3 ORDER BY n_cat DESC NULLS LAST, c.c_customer_id NULLS FIRST LIMIT 50",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001044 (42P13): SQL compilation error: error line 3 at position 2 Invalid argument types for function 'CONCAT': (ARRAY) (request_id=c6ee4712-69b2-43ea-9688-4bea8c15c320, sfqid=01c81270-000e-2229-0000-0002e98e5bed)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "CONCAT_WS takes scalar strings, so it cannot accept the ARRAY; replaced with ARRAY_TO_STRING(array, '|') which is the Snowflake equivalent of Hive concat_ws over sort_array(collect_set(...)), with the rest of the query unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "5 rows, 3 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L05",
+   "kind": "query",
+   "features": [
+    "if",
+    "nvl",
+    "isnull",
+    "round"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "2 rows, 6 columns match",
+   "reason": "target result equals the source result (2 rows, 6 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 3.6811179000069387,
+   "cost_usd": 0.000488,
+   "sql": "SELECT ss_store_sk, SUM(IFF(ss_net_profit > 0, ss_net_profit, 0)) AS profit, SUM(IFF(ss_net_profit < 0, -ss_net_profit, 0)) AS loss, SUM(COALESCE(ss_coupon_amt, 0)) AS coupons, COUNT(IFF(ss_customer_sk IS NULL, 1, NULL)) AS anon_sales, ROUND(AVG(COALESCE(ss_ext_discount_amt, 0)), 2) AS avg_disc FROM store_sales WHERE ss_sold_date_sk BETWEEN 2451545 AND 2451575 GROUP BY ss_store_sk ORDER BY ss_store_sk NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002139 (02000): SQL compilation error: Unknown function ISNULL. (request_id=1b119624-e241-4da1-9a08-e1a6ddadc231, sfqid=01c81270-000e-2246-0002-e98e000122b2)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Replaced the unsupported ISNULL(ss_customer_sk) function call with the standard predicate ss_customer_sk IS NULL inside IFF; all other logic and output columns are unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "2 rows, 6 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L07",
+   "kind": "query",
+   "features": [
+    "lag",
+    "rows_between",
+    "ntile",
+    "dense_rank"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "30 rows, 6 columns match",
+   "reason": "target result equals the source result (30 rows, 6 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.33419309998862445,
+   "cost_usd": 0,
+   "sql": "SELECT\n  d_date_sk,\n  daily,\n  daily - LAG(daily, 1) OVER (ORDER BY d_date_sk NULLS FIRST) AS delta,\n  SUM(daily) OVER (ORDER BY d_date_sk NULLS FIRST ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS wk_sum,\n  NTILE(4) OVER (ORDER BY daily NULLS FIRST) AS quartile,\n  DENSE_RANK() OVER (ORDER BY daily DESC NULLS LAST) AS rnk\nFROM (\n  SELECT\n    d_date_sk,\n    SUM(ss_net_paid) AS daily\n  FROM store_sales AS ss\n  JOIN date_dim AS d\n    ON d.d_date_sk = ss.ss_sold_date_sk\n  WHERE\n    d_year = 2001 AND d_moy = 3\n  GROUP BY\n    d_date_sk\n) AS x\nORDER BY\n  d_date_sk NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "30 rows, 6 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L08",
+   "kind": "query",
+   "features": [
+    "distribute_by",
+    "sort_by",
+    "having"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "412 rows, 3 columns match",
+   "reason": "target result equals the source result (412 rows, 3 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.31782619998557493,
+   "cost_usd": 0,
+   "sql": "SELECT\n  ss_store_sk,\n  ss_item_sk,\n  SUM(ss_quantity) AS qty\nFROM store_sales\nWHERE\n  ss_sold_date_sk BETWEEN 2451545 AND 2451550\nGROUP BY\n  ss_store_sk,\n  ss_item_sk\nHAVING\n  SUM(ss_quantity) > 50",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "412 rows, 3 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L11",
+   "kind": "query",
+   "features": [
+    "cast_timestamp",
+    "hour",
+    "to_date",
+    "interval",
+    "unix_timestamp"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 7 columns match",
+   "reason": "target result equals the source result (24 rows, 7 columns match)",
+   "attempts": 3,
+   "calls": 2,
+   "seconds": 15.036084699968342,
+   "cost_usd": 0.0016294,
+   "sql": "SELECT t_time_sk, t_time, TRY_TO_TIMESTAMP_NTZ(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second)) AS ts, HOUR(TRY_TO_TIMESTAMP_NTZ(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second))) AS h, TO_DATE(TRY_TO_TIMESTAMP_NTZ(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second))) AS dt, DATEADD('minute', 90, TRY_TO_TIMESTAMP_NTZ(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second))) AS later, CAST(DATE_PART(EPOCH_SECOND, TRY_TO_TIMESTAMP_NTZ(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second))) AS BIGINT) AS epoch FROM time_dim WHERE t_time_sk % 3600 = 0 ORDER BY t_time_sk NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002139 (02000): SQL compilation error: Unknown function STR_TO_UNIX. (request_id=a0d9374f-cd6a-4128-a4e3-17925369bf01, sfqid=01c81270-000e-2246-0002-e98e000122c2)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Replaced the non-existent STR_TO_UNIX call (and its invalid format string) with DATE_PART(EPOCH_SECOND, ...) cast to BIGINT to match Hive's unix_timestamp, which returns a BIGINT epoch in seconds.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "error",
+     "evidence": "001065 (22023): SQL compilation error: Function TRY_CAST cannot be used with arguments of types TIMESTAMP_NTZ(9) and DATE (request_id=f0c2f88a-3faa-427a-95f1-36cae3ec4a12, sfqid=01c81270-000e-2229-0000-0002e98e5c05)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Replaced TRY_CAST(string AS TIMESTAMP) with TRY_TO_TIMESTAMP_NTZ (avoids the invalid TRY_CAST/DATE overload), replaced the timestamp+INTERVAL with DATEADD('minute', 90, ...), and kept the same epoch, hour and date logic.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 3,
+     "status": "match",
+     "evidence": "24 rows, 7 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L12",
+   "kind": "query",
+   "features": [
+    "int_division",
+    "pmod",
+    "bround",
+    "cast_decimal",
+    "floor_ceil"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "54 rows, 9 columns match",
+   "reason": "target result equals the source result (54 rows, 9 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 14.534738699963782,
+   "cost_usd": 0.0018606,
+   "sql": "WITH agg AS (SELECT ss_item_sk, SUM(ss_quantity) / NULLIF(COUNT(*), 0) AS avg_qty_div, MOD(MOD(SUM(ss_quantity), 7) + 7, 7) AS m7, ROUND(SUM(ss_net_paid) / NULLIF(COUNT(*), 0), 2) AS avg_paid, AVG(ss_list_price) AS avg_lp, CAST(SUM(ss_ext_tax) AS DECIMAL(12, 2)) AS tax, FLOOR(AVG(ss_wholesale_cost)) AS fl, CEIL(AVG(ss_wholesale_cost)) AS ce, ABS(MIN(ss_net_profit)) AS worst FROM store_sales WHERE ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND ss_item_sk <= 100 GROUP BY ss_item_sk), y AS (SELECT agg.*, avg_lp * 10 AS sc FROM agg), fr AS (SELECT y.*, FLOOR(sc) AS fl10 FROM y) SELECT ss_item_sk, avg_qty_div, m7, avg_paid, CASE WHEN sc - fl10 > 0.5 THEN fl10 + 1 WHEN sc - fl10 < 0.5 THEN fl10 WHEN MOD(fl10::NUMBER(38, 0), 2) = 0 THEN fl10 ELSE fl10 + 1 END / 10.0 AS banker, tax, fl, ce, worst FROM fr ORDER BY ss_item_sk NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002139 (02000): SQL compilation error: Unknown functions PMOD, BROUND. (request_id=a2429ae5-81d6-426c-a360-18aed019d468, sfqid=01c81271-000e-2246-0002-e98e000122c6)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "PMOD replaced with MOD(MOD(x,7)+7,7) to match Hive's non-negative modulus, and BROUND (half-even, unsupported in Snowflake) replaced with an explicit half-even rounding on the averaged list price computed in CTEs, keeping the output columns and order unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "54 rows, 9 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L13",
+   "kind": "query",
+   "features": [
+    "percentile_approx",
+    "array_percentiles",
+    "stddev_pop"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "2 rows, 5 columns match",
+   "reason": "target result equals the source result (2 rows, 5 columns match)",
+   "attempts": 3,
+   "calls": 2,
+   "seconds": 5.296354899997823,
+   "cost_usd": 0.0015858,
+   "sql": "SELECT ss_store_sk, PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY ss_net_paid) AS median_paid, TO_JSON(ARRAY_CONSTRUCT(TO_VARCHAR(PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY ss_net_paid)), TO_VARCHAR(PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY ss_net_paid)))) AS quartiles, ROUND(STDDEV_POP(ss_net_paid), 3) AS sd, COUNT(*) AS n FROM store_sales WHERE ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND ss_net_paid IS NOT NULL GROUP BY ss_store_sk ORDER BY ss_store_sk NULLS FIRST;",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001046 (22023): SQL compilation error: Invalid value [ARRAY_CONSTRUCT(0.25, 0.75)] for function 'APPROX_PERCENTILE', parameter 2: Percentile must be a constant numberic value between 0 and 1 inclusive. (request_id=18bb849c-c313-4d7e-ada3-35709e7fb6cd, sfqid=01c81271-000e-2246-0002-e98e000122ce)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Snowflake APPROX_PERCENTILE accepts only a single constant percentile, so the array-valued quartiles was rebuilt as ARRAY_CONSTRUCT of two APPROX_PERCENTILE calls at 0.25 and 0.75, preserving the single array column; the rest was kept as is.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "mismatch",
+     "evidence": "2 of 2 rows differ\nrow 1, column 3 (quartiles): source '[\"151.23\",\"1616.76\"]' vs target '[151.23,1616.76]'\nrow 2, column 2 (median_paid): source 871.7 vs target 871.9625000000001"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Replaced APPROX_PERCENTILE (HLL approximation, interpolated values) with exact PERCENTILE_DISC, which returns actual data values like Hive's percentile_approx, and formatted quartiles as a JSON array of quoted strings via TO_JSON(ARRAY_CONSTRUCT(TO_VARCHAR(...))) to match the source output.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 3,
+     "status": "match",
+     "evidence": "2 rows, 5 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L14",
+   "kind": "query",
+   "features": [
+    "backticks",
+    "reserved_words",
+    "union_distinct",
+    "order_by_position"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 rows, 3 columns match",
+   "reason": "target result equals the source result (4 rows, 3 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 6.899220600025728,
+   "cost_usd": 0.0009078,
+   "sql": "SELECT d.d_year AS \"year\", 'store' AS \"channel\", COUNT(*) AS \"count\" FROM store_sales AS s JOIN date_dim AS d ON d.d_date_sk = s.ss_sold_date_sk WHERE d.d_year IN (2000, 2001) AND s.ss_item_sk < 50 GROUP BY d.d_year UNION SELECT d.d_year, 'web', COUNT(*) FROM web_sales AS w JOIN date_dim AS d ON d.d_date_sk = w.ws_sold_date_sk WHERE d.d_year IN (2000, 2001) AND w.ws_item_sk < 50 GROUP BY d.d_year ORDER BY 1, 2",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "002003 (42S02): SQL compilation error: Object '\"store_sales\"' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE \"store_sales\". (request_id=45972b71-8c48-4955-a16a-3acb793694c6, sfqid=01c81271-000e-2229-0000-0002e98e5c25)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed double quotes from table and column references (store_sales, date_dim, web_sales and their columns) so they resolve case-insensitively to the uppercase Snowflake objects; kept quoted lowercase output aliases year, channel, count to match Hive column names.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "4 rows, 3 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L16",
+   "kind": "etl",
+   "features": [
+    "set_hive",
+    "create_table_partitioned",
+    "insert_overwrite_static_partition"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "56 rows, 5 columns match",
+   "reason": "target result equals the source result (56 rows, 5 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 10.471586300001945,
+   "cost_usd": 0.0009916999999999999,
+   "sql": "CREATE TABLE IF NOT EXISTS l16_store_daily (ss_store_sk INT, sales_date DATE, net_paid DECIMAL(17, 2), tickets BIGINT, d_year INT); DELETE FROM l16_store_daily WHERE d_year = 2001; INSERT INTO l16_store_daily (ss_store_sk, sales_date, net_paid, tickets, d_year) SELECT ss_store_sk, d.d_date, SUM(ss_net_paid), COUNT(DISTINCT ss_ticket_number), 2001 FROM store_sales AS ss JOIN date_dim AS d ON d.d_date_sk = ss.ss_sold_date_sk WHERE d.d_year = 2001 AND d.d_moy = 1 GROUP BY ss_store_sk, d.d_date; SELECT * FROM l16_store_daily ORDER BY d_year NULLS FIRST, sales_date NULLS FIRST, ss_store_sk NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001003 (42000): SQL compilation error: syntax error line 8 at position 9 unexpected 'INT'. (request_id=fcde83b4-b9e6-42fa-95d5-42c3ac158059, sfqid=01c81271-000e-2229-0000-0002e98e5c31)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed Snowflake-invalid PARTITION BY and FILE_FORMAT=() from CREATE TABLE, made d_year a trailing ordinary column, replaced INSERT OVERWRITE ... PARTITION with DELETE of the 2001 partition followed by INSERT that supplies 2001 as the trailing d_year value.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "56 rows, 5 columns match"
+    }
+   ]
+  },
+  {
+   "id": "L17",
+   "kind": "etl",
+   "features": [
+    "set_hive",
+    "dynamic_partitions",
+    "insert_overwrite"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "22 rows, 5 columns match",
+   "reason": "target result equals the source result (22 rows, 5 columns match)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 10.963051599974278,
+   "cost_usd": 0.0009881,
+   "sql": "CREATE TABLE l17_cat_month (i_category VARCHAR, sales DECIMAL(17, 2), qty BIGINT, d_year INT, d_moy INT); DELETE FROM l17_cat_month WHERE d_year = 2002 AND d_moy IN (1, 2); INSERT INTO l17_cat_month (i_category, sales, qty, d_year, d_moy) SELECT i.i_category, SUM(ss.ss_ext_sales_price), SUM(ss.ss_quantity), d.d_year, d.d_moy FROM store_sales AS ss JOIN date_dim AS d ON d.d_date_sk = ss.ss_sold_date_sk JOIN item AS i ON i.i_item_sk = ss.ss_item_sk WHERE d.d_year = 2002 AND d.d_moy IN (1, 2) GROUP BY i.i_category, d.d_year, d.d_moy; SELECT * FROM l17_cat_month ORDER BY d_year NULLS FIRST, d_moy NULLS FIRST, i_category NULLS FIRST",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001003 (42000): SQL compilation error: syntax error line 7 at position 9 unexpected 'INT'. syntax error line 7 at position 12 unexpected ','. syntax error line 8 at position 8 unexpected 'INT'. syntax error line 9 at position 0 unexpected ')'. (request_id=865108b6-be55-4ee7-a685-d5a85d580f01, sfqid=01c81271-000e-2229-0000-0002e98e5c61)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the unsupported PARTITION BY and FILE_FORMAT=() clauses from CREATE TABLE, declared d_year and d_moy as ordinary trailing columns, and replaced the Snowflake-invalid INSERT OVERWRITE ... PARTITION with a DELETE of the affected partitions (d_year=2002, d_moy IN (1,2)) followed by a plain INSERT with an explicit column list.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "22 rows, 5 columns match"
+    }
+   ]
+  },
+  {
+   "id": "D01",
+   "kind": "ddl",
+   "features": [
+    "partitioned_by",
+    "stored_as_parquet",
+    "tblproperties",
+    "column_comment"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "8 columns as declared",
+   "reason": "target result equals the source result (8 columns as declared)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 4.38368349999655,
+   "cost_usd": 0.0003865,
+   "sql": "CREATE TABLE IF NOT EXISTS d01_sales_fact (ticket_number BIGINT COMMENT 'store ticket', item_sk INT, customer_sk INT, quantity INT, net_paid DECIMAL(17, 2), sold_ts TIMESTAMP, sale_date DATE, store_sk INT);",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001003 (42000): SQL compilation error: syntax error line 10 at position 12 unexpected 'DATE'. syntax error line 10 at position 16 unexpected ','. syntax error line 11 at position 11 unexpected 'INT'. syntax error line 12 at position 0 unexpected ')'. (request_id=19d6191e-b58d-49cc-a8e3-5a73b949cbc8, sfqid=01c81271-000e-2246-0002-e98e0001230a)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the invalid PARTITION BY clause and the FILE_FORMAT/parquet.compression/owner storage properties, and declared the partition columns sale_date DATE and store_sk INT as ordinary trailing columns.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "8 columns as declared"
+    }
+   ]
+  },
+  {
+   "id": "D02",
+   "kind": "ddl",
+   "features": [
+    "array_type",
+    "map_type",
+    "struct_type",
+    "stored_as_orc"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "6 columns as declared",
+   "reason": "target result equals the source result (6 columns as declared)",
+   "attempts": 3,
+   "calls": 2,
+   "seconds": 7.417764500016347,
+   "cost_usd": 0.0009783,
+   "sql": "CREATE TABLE d02_customer_profile (customer_id VARCHAR, tags ARRAY(VARCHAR), attributes OBJECT, address OBJECT(street VARCHAR, city VARCHAR, zip VARCHAR), scores ARRAY(DOUBLE), updated TIMESTAMP);",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=0c5275c0-6fd1-445e-8666-dd9131939b4a, sfqid=01c81271-000e-2229-0000-0002e98e5c99)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the unsupported FILE_FORMAT=() clause, since Hive's STORED AS ORC storage clause is dropped under the migration rules; column definitions are unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "mismatch",
+     "evidence": "column attributes: expected a object type, got map"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "The Hive MAP<STRING, INT> column was declared as Snowflake MAP(VARCHAR, INT), which the target expects as OBJECT; changed attributes to plain OBJECT, keeping the other columns, their order, and the dropped STORED AS ORC clause unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 3,
+     "status": "match",
+     "evidence": "6 columns as declared"
+    }
+   ]
+  },
+  {
+   "id": "D03",
+   "kind": "ddl",
+   "features": [
+    "external",
+    "row_format_delimited",
+    "textfile",
+    "location"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 columns as declared",
+   "reason": "target result equals the source result (4 columns as declared)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 6.860590199998114,
+   "cost_usd": 0.0006158,
+   "sql": "CREATE TABLE d03_raw_events (event_id VARCHAR, event_ts VARCHAR, user_id BIGINT, payload VARCHAR);",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001003 (42000): SQL compilation error: syntax error line 7 at position 4 unexpected 'FORMAT'. syntax error line 7 at position 11 unexpected 'DELIMITED'. syntax error line 7 at position 28 unexpected 'TERMINATED'. syntax error line 7 at position 39 unexpected 'BY'. syntax error line 7 at position 53 unexpected 'TERMINATED'. syntax error line 7 at position 64 unexpected 'BY'. (request_id=1ff444f0-6057-4e14-8772-58860aed2801, sfqid=01c81272-000e-2229-0000-0002e98e5cb9)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the Hive ROW FORMAT clause (the failing line), the invalid FILE_FORMAT=() and the LOCATION storage clause per the rules, and changed EXTERNAL TABLE to a regular TABLE because Snowflake external tables require a stage location that the migration drops and the target holds the same tables natively.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "4 columns as declared"
+    }
+   ]
+  },
+  {
+   "id": "D06",
+   "kind": "ddl",
+   "features": [
+    "backticked_reserved",
+    "db_qualified",
+    "if_not_exists"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "7 columns as declared",
+   "reason": "target result equals the source result (7 columns as declared)",
+   "attempts": 3,
+   "calls": 2,
+   "seconds": 9.798025399970356,
+   "cost_usd": 0.0010008,
+   "sql": "CREATE TABLE IF NOT EXISTS tpcds.d06_orders (\"order\" BIGINT, \"date\" DATE, \"user\" VARCHAR, \"group\" VARCHAR, \"value\" DOUBLE, \"comment\" VARCHAR, \"year\" INT)",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "001003 (42000): SQL compilation error: syntax error line 10 at position 9 unexpected 'INT'. (request_id=f76a0be9-366c-4b23-889e-c148fc64298f, sfqid=01c81272-000e-2229-0000-0002e98e5ccd)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the invalid PARTITION BY clause and the empty FILE_FORMAT=() storage clause, and added the partition column \"year\" INT as an ordinary column after the others, matching the Hive partitioned-table rules.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "error",
+     "evidence": "table not created: 002003 (42S02): SQL compilation error: Table 'D06_ORDERS' does not exist or not authorized. Your primary role ACCOUNTADMIN or one of your secondary roles must have at least one privilege granted on TABLE D06_ORDERS. (request_id=debed7ad-dea2-461c-bf52-2c9794684160, sfqid=01c81272-000e-2229-0000-0002e98e5cd5)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Unquoted the schema and table names so they fold to the default uppercase identifiers (D06_ORDERS) that the error shows exist, instead of case-sensitive lowercase quoted names; kept quoted reserved-word column names and moved the partition column year last.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 3,
+     "status": "match",
+     "evidence": "7 columns as declared"
+    }
+   ]
+  },
+  {
+   "id": "D08",
+   "kind": "ddl",
+   "features": [
+    "nested_complex_types"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 columns as declared",
+   "reason": "target result equals the source result (5 columns as declared)",
+   "attempts": 2,
+   "calls": 1,
+   "seconds": 4.937637600000016,
+   "cost_usd": 0.0004627,
+   "sql": "CREATE TABLE d08_sessions (session_id VARCHAR, events ARRAY(OBJECT(ts TIMESTAMP, name VARCHAR, props MAP(VARCHAR, VARCHAR))), device OBJECT(os VARCHAR, version VARCHAR, ids ARRAY(VARCHAR)), started TIMESTAMP, ended TIMESTAMP)",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "error",
+     "evidence": "000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=4f097a4b-34bf-412c-bcaf-917d83a6385b, sfqid=01c81272-000e-2229-0000-0002e98e5ce9)"
+    },
+    {
+     "step": "repair",
+     "model": "claude-haiku-5-5",
+     "note": "Removed the invalid FILE_FORMAT=() clause, which is a Hive storage clause with no Snowflake CREATE TABLE equivalent; column definitions and types are unchanged.",
+     "give_up": false
+    },
+    {
+     "step": "run",
+     "attempt": 2,
+     "status": "match",
+     "evidence": "5 columns as declared"
+    }
+   ]
+  },
+  {
+   "id": "D09",
+   "kind": "ddl",
+   "features": [
+    "create_view",
+    "nvl",
+    "concat_ws",
+    "lpad"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 6 columns match",
+   "reason": "target result equals the source result (24 rows, 6 columns match)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 1.7023594999918714,
+   "cost_usd": 0,
+   "sql": "CREATE VIEW d09_v_store_month AS\nSELECT\n  ss_store_sk,\n  d.d_year,\n  d.d_moy,\n  SUM(ss_net_paid) AS net_paid,\n  COALESCE(SUM(ss_coupon_amt), 0) AS coupons,\n  CONCAT_WS(\n    '-',\n    COALESCE(CAST(d.d_year AS VARCHAR), ''),\n    COALESCE(LPAD(CAST(d.d_moy AS VARCHAR), 2, '0'), '')\n  ) AS ym\nFROM store_sales AS ss\nJOIN date_dim AS d\n  ON d.d_date_sk = ss.ss_sold_date_sk\nWHERE\n  d.d_year = 2001\nGROUP BY\n  ss_store_sk,\n  d.d_year,\n  d.d_moy",
+   "trace": [
+    {
+     "step": "sqlglot",
+     "ok": true,
+     "error": ""
+    },
+    {
+     "step": "run",
+     "attempt": 1,
+     "status": "match",
+     "evidence": "24 rows, 6 columns match"
+    }
+   ]
+  }
+ ]
+}

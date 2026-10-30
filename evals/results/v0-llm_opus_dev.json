@@ -1,0 +1,785 @@
+{
+ "aggregate": {
+  "objects": 39,
+  "executes_pct": 100.0,
+  "matches_pct": 94.9,
+  "claimed_migrated_pct": 100.0,
+  "wrong_claimed_migrated": 2,
+  "needs_human_pct": 0.0,
+  "needs_human_but_fine": 0,
+  "calls_per_object": 1,
+  "seconds_per_object": 9.9,
+  "usd_per_object": 0.0199,
+  "by_kind": {
+   "query": {
+    "objects": 31,
+    "matches_pct": 96.8,
+    "wrong_claimed_migrated": 1
+   },
+   "etl": {
+    "objects": 2,
+    "matches_pct": 50.0,
+    "wrong_claimed_migrated": 1
+   },
+   "ddl": {
+    "objects": 6,
+    "matches_pct": 100.0,
+    "wrong_claimed_migrated": 0
+   }
+  }
+ },
+ "objects": [
+  {
+   "id": "Q02",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "2513 rows, 8 columns match",
+   "reason": "Dropped USE/SET; NULLIF on divisors mimics Hive's NULL-on-divide-by-zero; unnamed last column aliased \"_c7\" to match Hive's auto-generated name.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 21.611308800056577,
+   "cost_usd": 0.041623999999999994,
+   "sql": "WITH wscs AS (SELECT sold_date_sk, sales_price FROM (SELECT ws_sold_date_sk AS sold_date_sk, ws_ext_sales_price AS sales_price FROM web_sales UNION ALL SELECT cs_sold_date_sk AS sold_date_sk, cs_ext_sales_price AS sales_price FROM catalog_sales) AS sq1), wswscs AS (SELECT d_week_seq, SUM(CASE WHEN d_day_name = 'Sunday' THEN sales_price ELSE NULL END) AS sun_sales, SUM(CASE WHEN d_day_name = 'Monday' THEN sales_price ELSE NULL END) AS mon_sales, SUM(CASE WHEN d_day_name = 'Tuesday' THEN sales_price ELSE NULL END) AS tue_sales, SUM(CASE WHEN d_day_name = 'Wednesday' THEN sales_price ELSE NULL END) AS wed_sales, SUM(CASE WHEN d_day_name = 'Thursday' THEN sales_price ELSE NULL END) AS thu_sales, SUM(CASE WHEN d_day_name = 'Friday' THEN sales_price ELSE NULL END) AS fri_sales, SUM(CASE WHEN d_day_name = 'Saturday' THEN sales_price ELSE NULL END) AS sat_sales FROM wscs, date_dim WHERE d_date_sk = sold_date_sk GROUP BY d_week_seq) SELECT d_week_seq1, ROUND(sun_sales1 / NULLIF(sun_sales2, 0), 2) AS r1, ROUND(mon_sales1 / NULLIF(mon_sales2, 0), 2) AS r2, ROUND(tue_sales1 / NULLIF(tue_sales2, 0), 2) AS r3, ROUND(wed_sales1 / NULLIF(wed_sales2, 0), 2) AS r4, ROUND(thu_sales1 / NULLIF(thu_sales2, 0), 2) AS r5, ROUND(fri_sales1 / NULLIF(fri_sales2, 0), 2) AS r6, ROUND(sat_sales1 / NULLIF(sat_sales2, 0), 2) AS \"_c7\" FROM (SELECT wswscs.d_week_seq AS d_week_seq1, sun_sales AS sun_sales1, mon_sales AS mon_sales1, tue_sales AS tue_sales1, wed_sales AS wed_sales1, thu_sales AS thu_sales1, fri_sales AS fri_sales1, sat_sales AS sat_sales1 FROM wswscs, date_dim WHERE date_dim.d_week_seq = wswscs.d_week_seq AND d_year = 2001) AS y, (SELECT wswscs.d_week_seq AS d_week_seq2, sun_sales AS sun_sales2, mon_sales AS mon_sales2, tue_sales AS tue_sales2, wed_sales AS wed_sales2, thu_sales AS thu_sales2, fri_sales AS fri_sales2, sat_sales AS sat_sales2 FROM wswscs, date_dim WHERE date_dim.d_week_seq = wswscs.d_week_seq AND d_year = 2001 + 1) AS z WHERE d_week_seq1 = d_week_seq2 - 53 ORDER BY d_week_seq1",
+   "trace": []
+  },
+  {
+   "id": "Q03",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "15 rows, 4 columns match",
+   "reason": "Dropped the SET statement. Added NULLS LAST to 'sum_agg DESC' because Hive puts NULLs last on DESC sorts, while Snowflake puts them first by default.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 5.434479299990926,
+   "cost_usd": 0.01108,
+   "sql": "SELECT\n  dt.d_year,\n  item.i_brand_id AS brand_id,\n  item.i_brand AS brand,\n  SUM(ss_ext_sales_price) AS sum_agg\nFROM date_dim AS dt, store_sales, item\nWHERE\n  dt.d_date_sk = store_sales.ss_sold_date_sk\n  AND store_sales.ss_item_sk = item.i_item_sk\n  AND item.i_manufact_id = 128\n  AND dt.d_moy = 11\nGROUP BY\n  dt.d_year,\n  item.i_brand,\n  item.i_brand_id\nORDER BY\n  dt.d_year NULLS LAST,\n  sum_agg DESC NULLS LAST,\n  brand_id NULLS LAST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q06",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "12 rows, 2 columns match",
+   "reason": "Dropped SET statements and removed backtick quoting. The query logic is unchanged, including the correlated AVG subquery, which Snowflake supports. Unquoted output column names will appear in uppercase in Snowflake.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 8.867591399990488,
+   "cost_usd": 0.016416,
+   "sql": "SELECT a.ca_state AS state, COUNT(*) AS cnt FROM customer_address AS a, customer AS c, store_sales AS s, date_dim AS d, item AS i WHERE a.ca_address_sk = c.c_current_addr_sk AND c.c_customer_sk = s.ss_customer_sk AND s.ss_sold_date_sk = d.d_date_sk AND s.ss_item_sk = i.i_item_sk AND d.d_month_seq = (SELECT DISTINCT d_month_seq FROM date_dim WHERE d_year = 2001 AND d_moy = 1) AND i.i_current_price > 1.2 * (SELECT AVG(j.i_current_price) FROM item AS j WHERE j.i_category = i.i_category) GROUP BY a.ca_state HAVING COUNT(*) >= 10 ORDER BY cnt, a.ca_state LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q09",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 5 columns match",
+   "reason": "Dropped the Hive SET statement; the scalar subqueries are standard SQL and are kept unchanged. AVG precision and scale on decimal columns may differ slightly between Hive and Snowflake.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 12.562481799977832,
+   "cost_usd": 0.027672,
+   "sql": "SELECT\n  CASE\n    WHEN (SELECT COUNT(*) FROM store_sales WHERE ss_quantity BETWEEN 1 AND 20) > 74129\n    THEN (SELECT AVG(ss_ext_discount_amt) FROM store_sales WHERE ss_quantity BETWEEN 1 AND 20)\n    ELSE (SELECT AVG(ss_net_paid) FROM store_sales WHERE ss_quantity BETWEEN 1 AND 20)\n  END AS bucket1,\n  CASE\n    WHEN (SELECT COUNT(*) FROM store_sales WHERE ss_quantity BETWEEN 21 AND 40) > 122840\n    THEN (SELECT AVG(ss_ext_discount_amt) FROM store_sales WHERE ss_quantity BETWEEN 21 AND 40)\n    ELSE (SELECT AVG(ss_net_paid) FROM store_sales WHERE ss_quantity BETWEEN 21 AND 40)\n  END AS bucket2,\n  CASE\n    WHEN (SELECT COUNT(*) FROM store_sales WHERE ss_quantity BETWEEN 41 AND 60) > 56580\n    THEN (SELECT AVG(ss_ext_discount_amt) FROM store_sales WHERE ss_quantity BETWEEN 41 AND 60)\n    ELSE (SELECT AVG(ss_net_paid) FROM store_sales WHERE ss_quantity BETWEEN 41 AND 60)\n  END AS bucket3,\n  CASE\n    WHEN (SELECT COUNT(*) FROM store_sales WHERE ss_quantity BETWEEN 61 AND 80) > 10097\n    THEN (SELECT AVG(ss_ext_discount_amt) FROM store_sales WHERE ss_quantity BETWEEN 61 AND 80)\n    ELSE (SELECT AVG(ss_net_paid) FROM store_sales WHERE ss_quantity BETWEEN 61 AND 80)\n  END AS bucket4,\n  CASE\n    WHEN (SELECT COUNT(*) FROM store_sales WHERE ss_quantity BETWEEN 81 AND 100) > 165306\n    THEN (SELECT AVG(ss_ext_discount_amt) FROM store_sales WHERE ss_quantity BETWEEN 81 AND 100)\n    ELSE (SELECT AVG(ss_net_paid) FROM store_sales WHERE ss_quantity BETWEEN 81 AND 100)\n  END AS bucket5\nFROM reason\nWHERE r_reason_sk = 1",
+   "trace": []
+  },
+  {
+   "id": "Q11",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "6 rows, 4 columns match",
+   "reason": "Dropped USE/SET; added NULLS FIRST to match Hive ascending null ordering; decimal division scale may differ slightly from Hive (only affects near-exact ties).",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 21.044002899958286,
+   "cost_usd": 0.042136,
+   "sql": "WITH year_total AS (SELECT c_customer_id AS customer_id, c_first_name AS customer_first_name, c_last_name AS customer_last_name, c_preferred_cust_flag AS customer_preferred_cust_flag, c_birth_country AS customer_birth_country, c_login AS customer_login, c_email_address AS customer_email_address, d_year AS dyear, SUM(ss_ext_list_price - ss_ext_discount_amt) AS year_total, 's' AS sale_type FROM customer, store_sales, date_dim WHERE c_customer_sk = ss_customer_sk AND ss_sold_date_sk = d_date_sk GROUP BY c_customer_id, c_first_name, c_last_name, c_preferred_cust_flag, c_birth_country, c_login, c_email_address, d_year UNION ALL SELECT c_customer_id AS customer_id, c_first_name AS customer_first_name, c_last_name AS customer_last_name, c_preferred_cust_flag AS customer_preferred_cust_flag, c_birth_country AS customer_birth_country, c_login AS customer_login, c_email_address AS customer_email_address, d_year AS dyear, SUM(ws_ext_list_price - ws_ext_discount_amt) AS year_total, 'w' AS sale_type FROM customer, web_sales, date_dim WHERE c_customer_sk = ws_bill_customer_sk AND ws_sold_date_sk = d_date_sk GROUP BY c_customer_id, c_first_name, c_last_name, c_preferred_cust_flag, c_birth_country, c_login, c_email_address, d_year) SELECT t_s_secyear.customer_id, t_s_secyear.customer_first_name, t_s_secyear.customer_last_name, t_s_secyear.customer_preferred_cust_flag FROM year_total AS t_s_firstyear, year_total AS t_s_secyear, year_total AS t_w_firstyear, year_total AS t_w_secyear WHERE t_s_secyear.customer_id = t_s_firstyear.customer_id AND t_s_firstyear.customer_id = t_w_secyear.customer_id AND t_s_firstyear.customer_id = t_w_firstyear.customer_id AND t_s_firstyear.sale_type = 's' AND t_w_firstyear.sale_type = 'w' AND t_s_secyear.sale_type = 's' AND t_w_secyear.sale_type = 'w' AND t_s_firstyear.dyear = 2001 AND t_s_secyear.dyear = 2001 + 1 AND t_w_firstyear.dyear = 2001 AND t_w_secyear.dyear = 2001 + 1 AND t_s_firstyear.year_total > 0 AND t_w_firstyear.year_total > 0 AND CASE WHEN t_w_firstyear.year_total > 0 THEN (t_w_secyear.year_total * 1.0000) / t_w_firstyear.year_total ELSE 0.0 END > CASE WHEN t_s_firstyear.year_total > 0 THEN (t_s_secyear.year_total * 1.0000) / t_s_firstyear.year_total ELSE 0.0 END ORDER BY t_s_secyear.customer_id NULLS FIRST, t_s_secyear.customer_first_name NULLS FIRST, t_s_secyear.customer_last_name NULLS FIRST, t_s_secyear.customer_preferred_cust_flag NULLS FIRST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q12",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "Direct translation; decimal division scale of revenueratio may differ slightly between Hive and Snowflake.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 6.510769699991215,
+   "cost_usd": 0.013628,
+   "sql": "SELECT i_item_id, i_item_desc, i_category, i_class, i_current_price, SUM(ws_ext_sales_price) AS itemrevenue, SUM(ws_ext_sales_price) * 100.0000 / SUM(SUM(ws_ext_sales_price)) OVER (PARTITION BY i_class) AS revenueratio FROM web_sales, item, date_dim WHERE ws_item_sk = i_item_sk AND i_category IN ('Sports', 'Books', 'Home') AND ws_sold_date_sk = d_date_sk AND d_date BETWEEN CAST('1999-02-22' AS DATE) AND CAST('1999-03-24' AS DATE) GROUP BY i_item_id, i_item_desc, i_category, i_class, i_current_price ORDER BY i_category NULLS LAST, i_class NULLS LAST, i_item_id NULLS LAST, i_item_desc NULLS LAST, revenueratio NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q16",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 3 columns match",
+   "reason": "Dropped SET; backtick identifiers converted (aliases with spaces double-quoted, preserving lowercase); d_date assumed DATE type.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 8.239406999957282,
+   "cost_usd": 0.016052,
+   "sql": "SELECT\n  COUNT(DISTINCT cs_order_number) AS \"order count\",\n  SUM(cs_ext_ship_cost) AS \"total shipping cost\",\n  SUM(cs_net_profit) AS \"total net profit\"\nFROM catalog_sales AS cs1, date_dim, customer_address, call_center\nWHERE\n  d_date BETWEEN CAST('2002-02-01' AS DATE) AND CAST('2002-04-02' AS DATE)\n  AND cs1.cs_ship_date_sk = d_date_sk\n  AND cs1.cs_ship_addr_sk = ca_address_sk\n  AND ca_state = 'GA'\n  AND cs1.cs_call_center_sk = cc_call_center_sk\n  AND cc_county = 'Williamson County'\n  AND EXISTS (\n    SELECT *\n    FROM catalog_sales AS cs2\n    WHERE cs1.cs_order_number = cs2.cs_order_number\n      AND cs1.cs_warehouse_sk <> cs2.cs_warehouse_sk\n  )\n  AND NOT EXISTS (\n    SELECT *\n    FROM catalog_returns AS cr1\n    WHERE cs1.cs_order_number = cr1.cr_order_number\n  )\nORDER BY\n  COUNT(DISTINCT cs_order_number) NULLS LAST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q17",
+   "kind": "query",
+   "features": [
+    "tpcds"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 15 columns match",
+   "reason": "Cast to DOUBLE to match Hive double AVG/STDDEV semantics; NULLIF guards divide-by-zero (Hive returns NULL); NULLS FIRST preserves Hive ascending null ordering.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 19.744710900005884,
+   "cost_usd": 0.037708,
+   "sql": "SELECT\n  i_item_id,\n  i_item_desc,\n  s_state,\n  COUNT(ss_quantity) AS store_sales_quantitycount,\n  AVG(ss_quantity::DOUBLE) AS store_sales_quantityave,\n  STDDEV_SAMP(ss_quantity::DOUBLE) AS store_sales_quantitystdev,\n  STDDEV_SAMP(ss_quantity::DOUBLE) / NULLIF(AVG(ss_quantity::DOUBLE), 0) AS store_sales_quantitycov,\n  COUNT(sr_return_quantity) AS store_returns_quantitycount,\n  AVG(sr_return_quantity::DOUBLE) AS store_returns_quantityave,\n  STDDEV_SAMP(sr_return_quantity::DOUBLE) AS store_returns_quantitystdev,\n  STDDEV_SAMP(sr_return_quantity::DOUBLE) / NULLIF(AVG(sr_return_quantity::DOUBLE), 0) AS store_returns_quantitycov,\n  COUNT(cs_quantity) AS catalog_sales_quantitycount,\n  AVG(cs_quantity::DOUBLE) AS catalog_sales_quantityave,\n  STDDEV_SAMP(cs_quantity::DOUBLE) AS catalog_sales_quantitystdev,\n  STDDEV_SAMP(cs_quantity::DOUBLE) / NULLIF(AVG(cs_quantity::DOUBLE), 0) AS catalog_sales_quantitycov\nFROM store_sales, store_returns, catalog_sales, date_dim AS d1, date_dim AS d2, date_dim AS d3, store, item\nWHERE\n  d1.d_quarter_name = '2001Q1'\n  AND d1.d_date_sk = ss_sold_date_sk\n  AND i_item_sk = ss_item_sk\n  AND s_store_sk = ss_store_sk\n  AND ss_customer_sk = sr_customer_sk\n  AND ss_item_sk = sr_item_sk\n  AND ss_ticket_number = sr_ticket_number\n  AND sr_returned_date_sk = d2.d_date_sk\n  AND d2.d_quarter_name IN ('2001Q1', '2001Q2', '2001Q3')\n  AND sr_customer_sk = cs_bill_customer_sk\n  AND sr_item_sk = cs_item_sk\n  AND cs_sold_date_sk = d3.d_date_sk\n  AND d3.d_quarter_name IN ('2001Q1', '2001Q2', '2001Q3')\nGROUP BY\n  i_item_id,\n  i_item_desc,\n  s_state\nORDER BY\n  i_item_id NULLS FIRST,\n  i_item_desc NULLS FIRST,\n  s_state NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q18",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "rollup",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 11 columns match",
+   "reason": "Dropped SET statements and backticks; added NULLS FIRST to match Hive's default ascending null ordering (rollup subtotal rows); AVG decimal result scale may differ slightly from Hive.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 14.171891400008462,
+   "cost_usd": 0.027667999999999998,
+   "sql": "SELECT\n  i_item_id,\n  ca_country,\n  ca_state,\n  ca_county,\n  AVG(CAST(cs_quantity AS DECIMAL(12, 2))) AS agg1,\n  AVG(CAST(cs_list_price AS DECIMAL(12, 2))) AS agg2,\n  AVG(CAST(cs_coupon_amt AS DECIMAL(12, 2))) AS agg3,\n  AVG(CAST(cs_sales_price AS DECIMAL(12, 2))) AS agg4,\n  AVG(CAST(cs_net_profit AS DECIMAL(12, 2))) AS agg5,\n  AVG(CAST(c_birth_year AS DECIMAL(12, 2))) AS agg6,\n  AVG(CAST(cd1.cd_dep_count AS DECIMAL(12, 2))) AS agg7\nFROM catalog_sales, customer_demographics AS cd1, customer_demographics AS cd2, customer, customer_address, date_dim, item\nWHERE\n  cs_sold_date_sk = d_date_sk\n  AND cs_item_sk = i_item_sk\n  AND cs_bill_cdemo_sk = cd1.cd_demo_sk\n  AND cs_bill_customer_sk = c_customer_sk\n  AND cd1.cd_gender = 'F'\n  AND cd1.cd_education_status = 'Unknown'\n  AND c_current_cdemo_sk = cd2.cd_demo_sk\n  AND c_current_addr_sk = ca_address_sk\n  AND c_birth_month IN (1, 6, 8, 9, 12, 2)\n  AND d_year = 1998\n  AND ca_state IN ('MS', 'IN', 'ND', 'OK', 'NM', 'VA', 'MS')\nGROUP BY\n  ROLLUP (\n    i_item_id,\n    ca_country,\n    ca_state,\n    ca_county\n  )\nORDER BY\n  ca_country NULLS FIRST,\n  ca_state NULLS FIRST,\n  ca_county NULLS FIRST,\n  i_item_id NULLS FIRST,\n  GROUPING(ca_country),\n  GROUPING(ca_state),\n  GROUPING(ca_county)\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q19",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive",
+    "substr"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "10 rows, 5 columns match",
+   "reason": "Dropped USE/SET; removed backticks; added NULLS LAST to ext_price DESC to match Hive's default null ordering for DESC.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 8.469064599950798,
+   "cost_usd": 0.016524,
+   "sql": "SELECT i_brand_id AS brand_id, i_brand AS brand, i_manufact_id, i_manufact, SUM(ss_ext_sales_price) AS ext_price FROM date_dim, store_sales, item, customer, customer_address, store WHERE d_date_sk = ss_sold_date_sk AND ss_item_sk = i_item_sk AND i_manager_id = 8 AND d_moy = 11 AND d_year = 1998 AND ss_customer_sk = c_customer_sk AND c_current_addr_sk = ca_address_sk AND SUBSTR(ca_zip, 1, 5) != SUBSTR(s_zip, 1, 5) AND ss_store_sk = s_store_sk GROUP BY i_brand, i_brand_id, i_manufact_id, i_manufact ORDER BY ext_price DESC NULLS LAST, i_brand NULLS LAST, i_brand_id NULLS LAST, i_manufact_id NULLS LAST, i_manufact NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q20",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "Dropped SET statements and backticks; added NULLS FIRST to match Hive's ascending null ordering. Decimal division scale may differ slightly from Hive.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 7.50287309999112,
+   "cost_usd": 0.01498,
+   "sql": "SELECT i_item_id, i_item_desc, i_category, i_class, i_current_price, SUM(cs_ext_sales_price) AS itemrevenue, SUM(cs_ext_sales_price) * 100.0000 / SUM(SUM(cs_ext_sales_price)) OVER (PARTITION BY i_class) AS revenueratio FROM catalog_sales, item, date_dim WHERE cs_item_sk = i_item_sk AND i_category IN ('Sports', 'Books', 'Home') AND cs_sold_date_sk = d_date_sk AND d_date BETWEEN CAST('1999-02-22' AS DATE) AND CAST('1999-03-24' AS DATE) GROUP BY i_item_id, i_item_desc, i_category, i_class, i_current_price ORDER BY i_category NULLS FIRST, i_class NULLS FIRST, i_item_id NULLS FIRST, i_item_desc NULLS FIRST, revenueratio NULLS FIRST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q21",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "32 rows, 4 columns match",
+   "reason": "Dropped SET statements; ratio computed at high scale and bounds written as Hive's decimal results (2.000/3.000 = 0.66666667, 3.000/2.000 = 1.5) so exact-boundary rows behave as in Hive.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 14.415722200006712,
+   "cost_usd": 0.033344,
+   "sql": "SELECT * FROM (SELECT w_warehouse_name, i_item_id, SUM(CASE WHEN CAST(d_date AS DATE) < CAST('2000-03-11' AS DATE) THEN inv_quantity_on_hand ELSE 0 END) AS inv_before, SUM(CASE WHEN CAST(d_date AS DATE) >= CAST('2000-03-11' AS DATE) THEN inv_quantity_on_hand ELSE 0 END) AS inv_after FROM inventory, warehouse, item, date_dim WHERE i_current_price BETWEEN 0.99 AND 1.49 AND i_item_sk = inv_item_sk AND inv_warehouse_sk = w_warehouse_sk AND inv_date_sk = d_date_sk AND CAST(d_date AS DATE) BETWEEN CAST('2000-02-10' AS DATE) AND CAST('2000-04-10' AS DATE) GROUP BY w_warehouse_name, i_item_id) AS x WHERE (CASE WHEN inv_before > 0 THEN CAST(inv_after AS NUMBER(38,20)) / inv_before ELSE NULL END) BETWEEN 0.66666667 AND 1.50000000 ORDER BY w_warehouse_name, i_item_id LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q26",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 5 columns match",
+   "reason": "Removed the backtick quoting so the identifiers resolve case-insensitively in Snowflake; the query logic is otherwise unchanged. AVG on integer columns may return a different scale than Hive's double.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 5.935534999996889,
+   "cost_usd": 0.011668,
+   "sql": "SELECT i_item_id, AVG(cs_quantity) AS agg1, AVG(cs_list_price) AS agg2, AVG(cs_coupon_amt) AS agg3, AVG(cs_sales_price) AS agg4 FROM catalog_sales, customer_demographics, date_dim, item, promotion WHERE cs_sold_date_sk = d_date_sk AND cs_item_sk = i_item_sk AND cs_bill_cdemo_sk = cd_demo_sk AND cs_promo_sk = p_promo_sk AND cd_gender = 'M' AND cd_marital_status = 'S' AND cd_education_status = 'College' AND (p_channel_email = 'N' OR p_channel_event = 'N') AND d_year = 2000 GROUP BY i_item_id ORDER BY i_item_id NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q27",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "Dropped USE/SET; added NULLS FIRST to match Hive ascending null ordering; AVG of integer quantity cast to DOUBLE to match Hive's double result.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 14.409992000029888,
+   "cost_usd": 0.02894,
+   "sql": "WITH results AS (\n  SELECT\n    i_item_id,\n    s_state,\n    0 AS g_state,\n    ss_quantity AS agg1,\n    ss_list_price AS agg2,\n    ss_coupon_amt AS agg3,\n    ss_sales_price AS agg4\n  FROM store_sales, customer_demographics, date_dim, store, item\n  WHERE\n    ss_sold_date_sk = d_date_sk\n    AND ss_item_sk = i_item_sk\n    AND ss_store_sk = s_store_sk\n    AND ss_cdemo_sk = cd_demo_sk\n    AND cd_gender = 'M'\n    AND cd_marital_status = 'S'\n    AND cd_education_status = 'College'\n    AND d_year = 2002\n    AND s_state = 'TN'\n)\nSELECT\n  i_item_id,\n  s_state,\n  g_state,\n  agg1,\n  agg2,\n  agg3,\n  agg4\nFROM (\n  SELECT\n    i_item_id,\n    s_state,\n    0 AS g_state,\n    AVG(CAST(agg1 AS DOUBLE)) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n  GROUP BY i_item_id, s_state\n  UNION ALL\n  SELECT\n    i_item_id,\n    NULL AS s_state,\n    1 AS g_state,\n    AVG(CAST(agg1 AS DOUBLE)) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n  GROUP BY i_item_id\n  UNION ALL\n  SELECT\n    NULL AS i_item_id,\n    NULL AS s_state,\n    1 AS g_state,\n    AVG(CAST(agg1 AS DOUBLE)) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n) AS foo\nORDER BY i_item_id ASC NULLS FIRST, s_state ASC NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q31",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "cte"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "3 rows, 6 columns match",
+   "reason": "Removed backticks; added NULLIF on divisors in SELECT to mirror Hive's NULL-on-divide-by-zero (Snowflake would error); decimal result scale may differ slightly from Hive.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 19.765679600008298,
+   "cost_usd": 0.040756,
+   "sql": "WITH ss AS (\n  SELECT\n    ca_county,\n    d_qoy,\n    d_year,\n    SUM(ss_ext_sales_price) AS store_sales\n  FROM store_sales, date_dim, customer_address\n  WHERE\n    ss_sold_date_sk = d_date_sk AND ss_addr_sk = ca_address_sk\n  GROUP BY\n    ca_county,\n    d_qoy,\n    d_year\n), ws AS (\n  SELECT\n    ca_county,\n    d_qoy,\n    d_year,\n    SUM(ws_ext_sales_price) AS web_sales\n  FROM web_sales, date_dim, customer_address\n  WHERE\n    ws_sold_date_sk = d_date_sk AND ws_bill_addr_sk = ca_address_sk\n  GROUP BY\n    ca_county,\n    d_qoy,\n    d_year\n)\nSELECT\n  ss1.ca_county,\n  ss1.d_year,\n  (ws2.web_sales * 1.0000) / NULLIF(ws1.web_sales, 0) AS web_q1_q2_increase,\n  (ss2.store_sales * 1.0000) / NULLIF(ss1.store_sales, 0) AS store_q1_q2_increase,\n  (ws3.web_sales * 1.0000) / NULLIF(ws2.web_sales, 0) AS web_q2_q3_increase,\n  (ss3.store_sales * 1.0000) / NULLIF(ss2.store_sales, 0) AS store_q2_q3_increase\nFROM ss AS ss1, ss AS ss2, ss AS ss3, ws AS ws1, ws AS ws2, ws AS ws3\nWHERE\n  ss1.d_qoy = 1\n  AND ss1.d_year = 2000\n  AND ss1.ca_county = ss2.ca_county\n  AND ss2.d_qoy = 2\n  AND ss2.d_year = 2000\n  AND ss2.ca_county = ss3.ca_county\n  AND ss3.d_qoy = 3\n  AND ss3.d_year = 2000\n  AND ss1.ca_county = ws1.ca_county\n  AND ws1.d_qoy = 1\n  AND ws1.d_year = 2000\n  AND ws1.ca_county = ws2.ca_county\n  AND ws2.d_qoy = 2\n  AND ws2.d_year = 2000\n  AND ws1.ca_county = ws3.ca_county\n  AND ws3.d_qoy = 3\n  AND ws3.d_year = 2000\n  AND CASE WHEN ws1.web_sales > 0 THEN (ws2.web_sales * 1.0000) / ws1.web_sales ELSE NULL END\n    > CASE WHEN ss1.store_sales > 0 THEN (ss2.store_sales * 1.0000) / ss1.store_sales ELSE NULL END\n  AND CASE WHEN ws2.web_sales > 0 THEN (ws3.web_sales * 1.0000) / ws2.web_sales ELSE NULL END\n    > CASE WHEN ss2.store_sales > 0 THEN (ss3.store_sales * 1.0000) / ss2.store_sales ELSE NULL END\nORDER BY\n  ss1.ca_county NULLS LAST",
+   "trace": []
+  },
+  {
+   "id": "Q33",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 2 columns match",
+   "reason": "ORDER BY uses ordinal 2 to unambiguously sort by the aggregated total_sales alias as Hive does.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 14.09386160003487,
+   "cost_usd": 0.027612,
+   "sql": "WITH ss AS (SELECT i_manufact_id, SUM(ss_ext_sales_price) AS total_sales FROM store_sales, date_dim, customer_address, item WHERE i_manufact_id IN (SELECT i_manufact_id FROM item WHERE i_category IN ('Electronics')) AND ss_item_sk = i_item_sk AND ss_sold_date_sk = d_date_sk AND d_year = 1998 AND d_moy = 5 AND ss_addr_sk = ca_address_sk AND ca_gmt_offset = -5 GROUP BY i_manufact_id), cs AS (SELECT i_manufact_id, SUM(cs_ext_sales_price) AS total_sales FROM catalog_sales, date_dim, customer_address, item WHERE i_manufact_id IN (SELECT i_manufact_id FROM item WHERE i_category IN ('Electronics')) AND cs_item_sk = i_item_sk AND cs_sold_date_sk = d_date_sk AND d_year = 1998 AND d_moy = 5 AND cs_bill_addr_sk = ca_address_sk AND ca_gmt_offset = -5 GROUP BY i_manufact_id), ws AS (SELECT i_manufact_id, SUM(ws_ext_sales_price) AS total_sales FROM web_sales, date_dim, customer_address, item WHERE i_manufact_id IN (SELECT i_manufact_id FROM item WHERE i_category IN ('Electronics')) AND ws_item_sk = i_item_sk AND ws_sold_date_sk = d_date_sk AND d_year = 1998 AND d_moy = 5 AND ws_bill_addr_sk = ca_address_sk AND ca_gmt_offset = -5 GROUP BY i_manufact_id) SELECT i_manufact_id, SUM(total_sales) AS total_sales FROM (SELECT * FROM ss UNION ALL SELECT * FROM cs UNION ALL SELECT * FROM ws) AS tmp1 GROUP BY i_manufact_id ORDER BY 2 ASC NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q39",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 10 columns match",
+   "reason": "Dropped SET; cast to DOUBLE to mirror Hive's double results for AVG/STDDEV_SAMP; NULLS FIRST added to match Hive ascending null ordering.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 12.910119999956805,
+   "cost_usd": 0.034159999999999996,
+   "sql": "WITH inv AS (\n  SELECT\n    w_warehouse_name,\n    w_warehouse_sk,\n    i_item_sk,\n    d_moy,\n    stdev,\n    mean,\n    CASE mean WHEN 0 THEN NULL ELSE stdev / mean END AS cov\n  FROM (\n    SELECT\n      w_warehouse_name,\n      w_warehouse_sk,\n      i_item_sk,\n      d_moy,\n      STDDEV_SAMP(CAST(inv_quantity_on_hand AS DOUBLE)) * CAST(1.000 AS DOUBLE) AS stdev,\n      AVG(CAST(inv_quantity_on_hand AS DOUBLE)) AS mean\n    FROM inventory, item, warehouse, date_dim\n    WHERE\n      inv_item_sk = i_item_sk\n      AND inv_warehouse_sk = w_warehouse_sk\n      AND inv_date_sk = d_date_sk\n      AND d_year = 2001\n    GROUP BY\n      w_warehouse_name,\n      w_warehouse_sk,\n      i_item_sk,\n      d_moy\n  ) AS foo\n  WHERE\n    CASE mean WHEN 0 THEN 0 ELSE stdev / mean END > 1\n)\nSELECT\n  inv1.w_warehouse_sk AS wsk1,\n  inv1.i_item_sk AS isk1,\n  inv1.d_moy AS dmoy1,\n  inv1.mean AS mean1,\n  inv1.cov AS cov1,\n  inv2.w_warehouse_sk,\n  inv2.i_item_sk,\n  inv2.d_moy,\n  inv2.mean,\n  inv2.cov\nFROM inv AS inv1, inv AS inv2\nWHERE\n  inv1.i_item_sk = inv2.i_item_sk\n  AND inv1.w_warehouse_sk = inv2.w_warehouse_sk\n  AND inv1.d_moy = 1\n  AND inv2.d_moy = 1 + 1\nORDER BY\n  inv1.w_warehouse_sk NULLS FIRST,\n  inv1.i_item_sk NULLS FIRST,\n  inv1.d_moy NULLS FIRST,\n  inv1.mean NULLS FIRST,\n  inv1.cov NULLS FIRST,\n  inv2.d_moy NULLS FIRST,\n  inv2.mean NULLS FIRST,\n  inv2.cov NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "Q40",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "nvl",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "44 rows, 4 columns match",
+   "reason": "Dropped USE/SET; removed backticks; comma joins rewritten as CROSS JOIN with filters in WHERE (semantically equivalent); assumes tables resolve in current schema (tpcds).",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 7.9598894999944605,
+   "cost_usd": 0.015816,
+   "sql": "SELECT w_state, i_item_id, SUM(CASE WHEN (CAST(d_date AS DATE) < CAST('2000-03-11' AS DATE)) THEN cs_sales_price - NVL(cr_refunded_cash, 0) ELSE 0 END) AS sales_before, SUM(CASE WHEN (CAST(d_date AS DATE) >= CAST('2000-03-11' AS DATE)) THEN cs_sales_price - COALESCE(cr_refunded_cash, 0) ELSE 0 END) AS sales_after FROM catalog_sales LEFT OUTER JOIN catalog_returns ON (cs_order_number = cr_order_number AND cs_item_sk = cr_item_sk) CROSS JOIN warehouse CROSS JOIN item CROSS JOIN date_dim WHERE i_current_price BETWEEN 0.99 AND 1.49 AND i_item_sk = cs_item_sk AND cs_warehouse_sk = w_warehouse_sk AND cs_sold_date_sk = d_date_sk AND d_date BETWEEN CAST('2000-02-10' AS DATE) AND CAST('2000-04-10' AS DATE) GROUP BY w_state, i_item_id ORDER BY w_state NULLS LAST, i_item_id NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q42",
+   "kind": "query",
+   "features": [
+    "tpcds"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 rows, 4 columns match",
+   "reason": "Added explicit NULLS LAST to the DESC sort key to match Hive's default (DESC sorts NULLs last in Hive but first in Snowflake); the unaliased SUM column will get a different auto-generated name than in Hive.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 8.15060789999552,
+   "cost_usd": 0.015231999999999999,
+   "sql": "SELECT dt.d_year, item.i_category_id, item.i_category, SUM(ss_ext_sales_price) FROM date_dim AS dt, store_sales, item WHERE dt.d_date_sk = store_sales.ss_sold_date_sk AND store_sales.ss_item_sk = item.i_item_sk AND item.i_manager_id = 1 AND dt.d_moy = 11 AND dt.d_year = 2000 GROUP BY dt.d_year, item.i_category_id, item.i_category ORDER BY SUM(ss_ext_sales_price) DESC NULLS LAST, dt.d_year NULLS LAST, item.i_category_id NULLS LAST, item.i_category NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q45",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "substr"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 3 columns match",
+   "reason": "Removed backtick quoting; the rest of the query is directly compatible with Snowflake.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 6.599600800022017,
+   "cost_usd": 0.01314,
+   "sql": "SELECT\n  ca_zip,\n  ca_city,\n  SUM(ws_sales_price)\nFROM web_sales, customer, customer_address, date_dim, item\nWHERE\n  ws_bill_customer_sk = c_customer_sk\n  AND c_current_addr_sk = ca_address_sk\n  AND ws_item_sk = i_item_sk\n  AND (\n    SUBSTR(ca_zip, 1, 5) IN ('85669', '86197', '88274', '83405', '86475', '85392', '85460', '80348', '81792')\n    OR i_item_id IN (\n      SELECT\n        i_item_id\n      FROM item\n      WHERE\n        i_item_sk IN (2, 3, 5, 7, 11, 13, 17, 19, 23, 29)\n    )\n  )\n  AND ws_sold_date_sk = d_date_sk\n  AND d_qoy = 2\n  AND d_year = 2001\nGROUP BY\n  ca_zip,\n  ca_city\nORDER BY\n  ca_zip NULLS LAST,\n  ca_city NULLS LAST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q46",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "Dropped USE/SET; removed backticks; added NULLS FIRST to match Hive's default ascending null ordering.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 10.14102909999201,
+   "cost_usd": 0.01992,
+   "sql": "SELECT c_last_name, c_first_name, ca_city, bought_city, ss_ticket_number, amt, profit FROM (SELECT ss_ticket_number, ss_customer_sk, ca_city AS bought_city, SUM(ss_coupon_amt) AS amt, SUM(ss_net_profit) AS profit FROM store_sales, date_dim, store, household_demographics, customer_address WHERE store_sales.ss_sold_date_sk = date_dim.d_date_sk AND store_sales.ss_store_sk = store.s_store_sk AND store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk AND store_sales.ss_addr_sk = customer_address.ca_address_sk AND (household_demographics.hd_dep_count = 4 OR household_demographics.hd_vehicle_count = 3) AND date_dim.d_dow IN (6, 0) AND date_dim.d_year IN (1999, 1999 + 1, 1999 + 2) AND store.s_city IN ('Fairview', 'Midway') GROUP BY ss_ticket_number, ss_customer_sk, ss_addr_sk, ca_city) AS dn, customer, customer_address AS current_addr WHERE ss_customer_sk = c_customer_sk AND customer.c_current_addr_sk = current_addr.ca_address_sk AND current_addr.ca_city <> bought_city ORDER BY c_last_name NULLS FIRST, c_first_name NULLS FIRST, ca_city NULLS FIRST, bought_city NULLS FIRST, ss_ticket_number NULLS FIRST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q47",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "cte",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 10 columns match",
+   "reason": "Removed backtick identifier quoting; logic, explicit NULLS LAST ordering and ordinals preserved unchanged.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 13.60696070000995,
+   "cost_usd": 0.030435999999999998,
+   "sql": "WITH v1 AS (SELECT i_category, i_brand, s_store_name, s_company_name, d_year, d_moy, SUM(ss_sales_price) AS sum_sales, AVG(SUM(ss_sales_price)) OVER (PARTITION BY i_category, i_brand, s_store_name, s_company_name, d_year) AS avg_monthly_sales, RANK() OVER (PARTITION BY i_category, i_brand, s_store_name, s_company_name ORDER BY d_year NULLS LAST, d_moy NULLS LAST) AS rn FROM item, store_sales, date_dim, store WHERE ss_item_sk = i_item_sk AND ss_sold_date_sk = d_date_sk AND ss_store_sk = s_store_sk AND (d_year = 1999 OR (d_year = 1999 - 1 AND d_moy = 12) OR (d_year = 1999 + 1 AND d_moy = 1)) GROUP BY i_category, i_brand, s_store_name, s_company_name, d_year, d_moy), v2 AS (SELECT v1.i_category, v1.i_brand, v1.s_store_name, v1.s_company_name, v1.d_year, v1.d_moy, v1.avg_monthly_sales, v1.sum_sales, v1_lag.sum_sales AS psum, v1_lead.sum_sales AS nsum FROM v1, v1 AS v1_lag, v1 AS v1_lead WHERE v1.i_category = v1_lag.i_category AND v1.i_category = v1_lead.i_category AND v1.i_brand = v1_lag.i_brand AND v1.i_brand = v1_lead.i_brand AND v1.s_store_name = v1_lag.s_store_name AND v1.s_store_name = v1_lead.s_store_name AND v1.s_company_name = v1_lag.s_company_name AND v1.s_company_name = v1_lead.s_company_name AND v1.rn = v1_lag.rn + 1 AND v1.rn = v1_lead.rn - 1) SELECT * FROM v2 WHERE d_year = 1999 AND avg_monthly_sales > 0 AND CASE WHEN avg_monthly_sales > 0 THEN ABS(sum_sales - avg_monthly_sales) / avg_monthly_sales ELSE NULL END > 0.1 ORDER BY sum_sales - avg_monthly_sales NULLS LAST, 1 NULLS LAST, 2 NULLS LAST, 3 NULLS LAST, 4 NULLS LAST, 5 NULLS LAST, 6 NULLS LAST, 7 NULLS LAST, 8 NULLS LAST, 9 NULLS LAST, 10 NULLS LAST LIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "L01",
+   "kind": "query",
+   "features": [
+    "lateral_view",
+    "explode",
+    "collect_set",
+    "size",
+    "cast_string"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 3 columns match",
+   "reason": "collect_set becomes ARRAY_UNIQUE_AGG, which also skips NULLs. LATERAL VIEW explode becomes LATERAL FLATTEN with the value cast to VARCHAR, and size becomes ARRAY_SIZE.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 8.625176700006705,
+   "cost_usd": 0.014752000000000001,
+   "sql": "SELECT t.ss_store_sk, e.value::VARCHAR AS item_id, ARRAY_SIZE(t.items) AS n_items\nFROM (\n  SELECT ss_store_sk, ARRAY_UNIQUE_AGG(CAST(ss_item_sk AS VARCHAR)) AS items\n  FROM store_sales\n  WHERE ss_sold_date_sk = 2451545 AND ss_item_sk <= 60\n  GROUP BY ss_store_sk\n) t,\nLATERAL FLATTEN(input => t.items) e\nORDER BY t.ss_store_sk, CAST(e.value::VARCHAR AS INT)",
+   "trace": []
+  },
+  {
+   "id": "L02",
+   "kind": "query",
+   "features": [
+    "collect_set",
+    "sort_array",
+    "concat_ws",
+    "having"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 3 columns match",
+   "reason": "concat_ws('|', sort_array(collect_set(x))) is rewritten as LISTAGG(DISTINCT x, '|') WITHIN GROUP (ORDER BY x); both skip NULLs, and the HAVING clause guarantees at least 3 non-null categories, so the string is never empty.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 6.989753599977121,
+   "cost_usd": 0.01622,
+   "sql": "SELECT c.c_customer_id, LISTAGG(DISTINCT i.i_category, '|') WITHIN GROUP (ORDER BY i.i_category) AS categories, COUNT(DISTINCT i.i_category) AS n_cat FROM store_sales ss JOIN customer c ON c.c_customer_sk = ss.ss_customer_sk JOIN item i ON i.i_item_sk = ss.ss_item_sk WHERE ss.ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND c.c_customer_sk < 400 GROUP BY c.c_customer_id HAVING COUNT(DISTINCT i.i_category) >= 3 ORDER BY n_cat DESC, c.c_customer_id LIMIT 50",
+   "trace": []
+  },
+  {
+   "id": "L05",
+   "kind": "query",
+   "features": [
+    "if",
+    "nvl",
+    "isnull",
+    "round"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "2 rows, 6 columns match",
+   "reason": "Replaced if() with IFF() and isnull(x) with x IS NULL. Added NULLS FIRST to match Hive's default ascending null ordering, so a NULL store key still sorts first.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 7.579027600004338,
+   "cost_usd": 0.014148,
+   "sql": "SELECT ss_store_sk, SUM(IFF(ss_net_profit > 0, ss_net_profit, 0)) AS profit, SUM(IFF(ss_net_profit < 0, -ss_net_profit, 0)) AS loss, SUM(NVL(ss_coupon_amt, 0)) AS coupons, COUNT(IFF(ss_customer_sk IS NULL, 1, NULL)) AS anon_sales, ROUND(AVG(NVL(ss_ext_discount_amt, 0)), 2) AS avg_disc FROM store_sales WHERE ss_sold_date_sk BETWEEN 2451545 AND 2451575 GROUP BY ss_store_sk ORDER BY ss_store_sk ASC NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L07",
+   "kind": "query",
+   "features": [
+    "lag",
+    "rows_between",
+    "ntile",
+    "dense_rank"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "30 rows, 6 columns match",
+   "reason": "Direct translation; DESC NULLS LAST added to match Hive null ordering (Hive: NULLs first for ASC, last for DESC; Snowflake ASC default puts NULLs last, but d_date_sk is non-null join key, and ntile tie order on NULL daily may differ only if NULL sums occur).",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 5.077244899992365,
+   "cost_usd": 0.012612,
+   "sql": "SELECT d_date_sk, daily,\n       daily - LAG(daily, 1) OVER (ORDER BY d_date_sk) AS delta,\n       SUM(daily) OVER (ORDER BY d_date_sk ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS wk_sum,\n       NTILE(4) OVER (ORDER BY daily) AS quartile,\n       DENSE_RANK() OVER (ORDER BY daily DESC NULLS LAST) AS rnk\nFROM (\n  SELECT d_date_sk, SUM(ss_net_paid) AS daily\n  FROM store_sales ss JOIN date_dim d ON d.d_date_sk = ss.ss_sold_date_sk\n  WHERE d_year = 2001 AND d_moy = 3\n  GROUP BY d_date_sk\n) x\nORDER BY d_date_sk",
+   "trace": []
+  },
+  {
+   "id": "L08",
+   "kind": "query",
+   "features": [
+    "distribute_by",
+    "sort_by",
+    "having"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "412 rows, 3 columns match",
+   "reason": "DISTRIBUTE BY has no Snowflake equivalent and was dropped; Hive's per-reducer SORT BY became a global ORDER BY, which returns the same rows and satisfies the per-partition ordering.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 4.306871699984185,
+   "cost_usd": 0.009924,
+   "sql": "SELECT ss_store_sk, ss_item_sk, SUM(ss_quantity) AS qty FROM store_sales WHERE ss_sold_date_sk BETWEEN 2451545 AND 2451550 GROUP BY ss_store_sk, ss_item_sk HAVING SUM(ss_quantity) > 50 ORDER BY ss_store_sk, qty DESC",
+   "trace": []
+  },
+  {
+   "id": "L11",
+   "kind": "query",
+   "features": [
+    "cast_timestamp",
+    "hour",
+    "to_date",
+    "interval",
+    "unix_timestamp"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 7 columns match",
+   "reason": "The Hive string-concat-then-cast (which yields unpadded values such as '2001-03-15 1:0:0') is replaced with TIMESTAMP_NTZ_FROM_PARTS for the same timestamps; unix_timestamp is assumed to use a UTC session timezone, so epoch is computed from the NTZ value.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 9.507060199975967,
+   "cost_usd": 0.023711999999999997,
+   "sql": "SELECT t_time_sk, t_time, TIMESTAMP_NTZ_FROM_PARTS(2001, 3, 15, t_hour, t_minute, t_second) AS ts, HOUR(TIMESTAMP_NTZ_FROM_PARTS(2001, 3, 15, t_hour, t_minute, t_second)) AS h, TO_DATE(TIMESTAMP_NTZ_FROM_PARTS(2001, 3, 15, t_hour, t_minute, t_second)) AS dt, DATEADD(minute, 90, TIMESTAMP_NTZ_FROM_PARTS(2001, 3, 15, t_hour, t_minute, t_second)) AS later, DATE_PART(EPOCH_SECOND, TIMESTAMP_NTZ_FROM_PARTS(2001, 3, 15, t_hour, t_minute, t_second)) AS epoch FROM time_dim WHERE t_time_sk % 3600 = 0 ORDER BY t_time_sk",
+   "trace": []
+  },
+  {
+   "id": "L12",
+   "kind": "query",
+   "features": [
+    "int_division",
+    "pmod",
+    "bround",
+    "cast_decimal",
+    "floor_ceil"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "54 rows, 9 columns match",
+   "reason": "Hive int/int division yields DOUBLE, so it is cast explicitly. pmod is emulated as a positive modulo. bround maps to ROUND with 'HALF_TO_EVEN'. An overflowing decimal cast raises an error in Snowflake, where Hive would return NULL.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 13.065151699993294,
+   "cost_usd": 0.023748,
+   "sql": "SELECT ss_item_sk,\n       CAST(SUM(ss_quantity) AS DOUBLE) / COUNT(*) AS avg_qty_div,\n       MOD(MOD(SUM(ss_quantity), 7) + 7, 7) AS m7,\n       ROUND(SUM(ss_net_paid) / COUNT(*), 2) AS avg_paid,\n       ROUND(AVG(ss_list_price), 1, 'HALF_TO_EVEN') AS banker,\n       CAST(SUM(ss_ext_tax) AS DECIMAL(12, 2)) AS tax,\n       FLOOR(AVG(ss_wholesale_cost)) AS fl,\n       CEIL(AVG(ss_wholesale_cost)) AS ce,\n       ABS(MIN(ss_net_profit)) AS worst\nFROM store_sales\nWHERE ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND ss_item_sk <= 100\nGROUP BY ss_item_sk\nORDER BY ss_item_sk",
+   "trace": []
+  },
+  {
+   "id": "L13",
+   "kind": "query",
+   "features": [
+    "percentile_approx",
+    "array_percentiles",
+    "stddev_pop"
+   ],
+   "status": "mismatch",
+   "verdict": "migrated",
+   "evidence": "2 of 2 rows differ\nrow 1, column 3 (quartiles): source '[\"151.23\",\"1616.76\"]' vs target '[151.23,1616.76]'\nrow 2, column 2 (median_paid): source 871.7 vs target 871.9625000000001",
+   "reason": "percentile_approx maps to APPROX_PERCENTILE, which has no accuracy argument, and the array form becomes ARRAY_CONSTRUCT of two calls; because the algorithms differ (t-digest vs Hive histogram), the approximate values may not match exactly; NULLS FIRST is added to keep Hive's ascending null ordering.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 9.565575899963733,
+   "cost_usd": 0.018044,
+   "sql": "SELECT ss_store_sk,\n       APPROX_PERCENTILE(ss_net_paid, 0.5) AS median_paid,\n       ARRAY_CONSTRUCT(APPROX_PERCENTILE(ss_net_paid, 0.25), APPROX_PERCENTILE(ss_net_paid, 0.75)) AS quartiles,\n       ROUND(STDDEV_POP(ss_net_paid), 3) AS sd,\n       COUNT(*) AS n\nFROM store_sales\nWHERE ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND ss_net_paid IS NOT NULL\nGROUP BY ss_store_sk\nORDER BY ss_store_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L14",
+   "kind": "query",
+   "features": [
+    "backticks",
+    "reserved_words",
+    "union_distinct",
+    "order_by_position"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 rows, 3 columns match",
+   "reason": "Removed backtick quoting. UNION removes duplicate rows in both Hive and Snowflake, and ORDER BY applies to the whole union in both. Unquoted aliases come back uppercase in Snowflake (YEAR, CHANNEL, COUNT).",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 5.76230330002727,
+   "cost_usd": 0.013928000000000001,
+   "sql": "SELECT d.d_year AS year, 'store' AS channel, COUNT(*) AS count FROM store_sales s JOIN date_dim d ON d.d_date_sk = s.ss_sold_date_sk WHERE d.d_year IN (2000, 2001) AND s.ss_item_sk < 50 GROUP BY d.d_year UNION SELECT d.d_year, 'web', COUNT(*) FROM web_sales w JOIN date_dim d ON d.d_date_sk = w.ws_sold_date_sk WHERE d.d_year IN (2000, 2001) AND w.ws_item_sk < 50 GROUP BY d.d_year ORDER BY 1, 2",
+   "trace": []
+  },
+  {
+   "id": "L16",
+   "kind": "etl",
+   "features": [
+    "set_hive",
+    "create_table_partitioned",
+    "insert_overwrite_static_partition"
+   ],
+   "status": "mismatch",
+   "verdict": "migrated",
+   "evidence": "50 of 56 rows differ\nrow 1, column 1 (ss_store_sk): source None vs target 1.0\nrow 2, column 1 (ss_store_sk): source 1.0 vs target None\nrow 5, column 1 (ss_store_sk): source None vs target 1.0\nrow 6, column 1 (ss_store_sk): source 1.0 vs target None\nrow 7, column 1 (ss_store_sk): source None vs target 1.0",
+   "reason": "The d_year partition column becomes the last ordinary column. The static-partition INSERT OVERWRITE is emulated with DELETE WHERE d_year = 2001 followed by INSERT, so other years' rows are kept. The SET statement and the STORED AS clause were dropped.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 10.473950800020248,
+   "cost_usd": 0.016764,
+   "sql": "CREATE TABLE IF NOT EXISTS l16_store_daily (\n  ss_store_sk INT, sales_date DATE, net_paid DECIMAL(17,2), tickets BIGINT, d_year INT\n);\nDELETE FROM l16_store_daily WHERE d_year = 2001;\nINSERT INTO l16_store_daily (ss_store_sk, sales_date, net_paid, tickets, d_year)\nSELECT ss.ss_store_sk, d.d_date, SUM(ss.ss_net_paid), COUNT(DISTINCT ss.ss_ticket_number), 2001\nFROM store_sales ss JOIN date_dim d ON d.d_date_sk = ss.ss_sold_date_sk\nWHERE d.d_year = 2001 AND d.d_moy = 1\nGROUP BY ss.ss_store_sk, d.d_date;\nSELECT * FROM l16_store_daily ORDER BY d_year, sales_date, ss_store_sk",
+   "trace": []
+  },
+  {
+   "id": "L17",
+   "kind": "etl",
+   "features": [
+    "set_hive",
+    "dynamic_partitions",
+    "insert_overwrite"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "22 rows, 5 columns match",
+   "reason": "Partition columns appended as trailing ordinary columns (Hive order); the table is newly created, so the dynamic-partition INSERT OVERWRITE becomes a plain INSERT; NULLS FIRST keeps Hive's ascending null ordering.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 8.693399900046643,
+   "cost_usd": 0.018364,
+   "sql": "CREATE TABLE l17_cat_month (i_category STRING, sales DECIMAL(17,2), qty BIGINT, d_year INT, d_moy INT);\nINSERT INTO l17_cat_month (i_category, sales, qty, d_year, d_moy)\nSELECT i.i_category, SUM(ss.ss_ext_sales_price), SUM(ss.ss_quantity), d.d_year, d.d_moy\nFROM store_sales ss\nJOIN date_dim d ON d.d_date_sk = ss.ss_sold_date_sk\nJOIN item i ON i.i_item_sk = ss.ss_item_sk\nWHERE d.d_year = 2002 AND d.d_moy IN (1, 2)\nGROUP BY i.i_category, d.d_year, d.d_moy;\nSELECT * FROM l17_cat_month ORDER BY d_year NULLS FIRST, d_moy NULLS FIRST, i_category NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "D01",
+   "kind": "ddl",
+   "features": [
+    "partitioned_by",
+    "stored_as_parquet",
+    "tblproperties",
+    "column_comment"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "8 columns as declared",
+   "reason": "Partition columns appended as ordinary columns; STORED AS/TBLPROPERTIES dropped; TIMESTAMP mapped to TIMESTAMP_NTZ.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 4.236719900043681,
+   "cost_usd": 0.0072239999999999995,
+   "sql": "CREATE TABLE IF NOT EXISTS d01_sales_fact (ticket_number BIGINT COMMENT 'store ticket', item_sk INT, customer_sk INT, quantity INT, net_paid DECIMAL(17,2), sold_ts TIMESTAMP_NTZ, sale_date DATE, store_sk INT)",
+   "trace": []
+  },
+  {
+   "id": "D02",
+   "kind": "ddl",
+   "features": [
+    "array_type",
+    "map_type",
+    "struct_type",
+    "stored_as_orc"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "6 columns as declared",
+   "reason": "Hive ARRAY becomes Snowflake semi-structured ARRAY, and MAP/STRUCT become OBJECT, so element, key and field types are no longer enforced; STORED AS ORC dropped; TIMESTAMP mapped to TIMESTAMP_NTZ.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 3.7931071000057273,
+   "cost_usd": 0.0071920000000000005,
+   "sql": "CREATE TABLE d02_customer_profile (\n  customer_id STRING,\n  tags ARRAY,\n  attributes OBJECT,\n  address OBJECT,\n  scores ARRAY,\n  updated TIMESTAMP_NTZ\n)",
+   "trace": []
+  },
+  {
+   "id": "D03",
+   "kind": "ddl",
+   "features": [
+    "external",
+    "row_format_delimited",
+    "textfile",
+    "location"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 columns as declared",
+   "reason": "Converted the Hive external table to a regular Snowflake table; ROW FORMAT, STORED AS and LOCATION were dropped as instructed, and loading the tab-delimited files would need a stage plus COPY INTO.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 4.364212699991185,
+   "cost_usd": 0.00614,
+   "sql": "CREATE TABLE d03_raw_events (\n  event_id STRING,\n  event_ts STRING,\n  user_id BIGINT,\n  payload STRING\n)",
+   "trace": []
+  },
+  {
+   "id": "D06",
+   "kind": "ddl",
+   "features": [
+    "backticked_reserved",
+    "db_qualified",
+    "if_not_exists"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "7 columns as declared",
+   "reason": "Dropped STORED AS PARQUET, and the partition column year became an ordinary trailing column. ORDER and GROUP are reserved in Snowflake, so they are double-quoted in uppercase to match unquoted name resolution; the other names are left unquoted, so they stay case-insensitive.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 12.550039399997331,
+   "cost_usd": 0.02078,
+   "sql": "CREATE TABLE IF NOT EXISTS tpcds.d06_orders (\"ORDER\" BIGINT, date DATE, user STRING, \"GROUP\" STRING, value DOUBLE, comment STRING, year INT)",
+   "trace": []
+  },
+  {
+   "id": "D08",
+   "kind": "ddl",
+   "features": [
+    "nested_complex_types"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 columns as declared",
+   "reason": "The nested Hive types become semi-structured types: ARRAY<STRUCT<...>> maps to ARRAY and STRUCT maps to OBJECT, so the inner field types are not enforced. TIMESTAMP maps to TIMESTAMP_NTZ, and STORED AS PARQUET was dropped.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 4.275780499971006,
+   "cost_usd": 0.006916,
+   "sql": "CREATE TABLE d08_sessions (session_id STRING, events ARRAY, device OBJECT, started TIMESTAMP_NTZ, ended TIMESTAMP_NTZ)",
+   "trace": []
+  },
+  {
+   "id": "D09",
+   "kind": "ddl",
+   "features": [
+    "create_view",
+    "nvl",
+    "concat_ws",
+    "lpad"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 6 columns match",
+   "reason": "Direct translation; string cast mapped to VARCHAR. Assumes d_year and d_moy are never NULL here (filter forces d_year, and d_moy is assumed non-null), so the NULL-handling difference in CONCAT_WS does not change the result.",
+   "attempts": 1,
+   "calls": 1,
+   "seconds": 6.788517699984368,
+   "cost_usd": 0.010204,
+   "sql": "CREATE VIEW d09_v_store_month AS SELECT ss_store_sk, d.d_year, d.d_moy, SUM(ss_net_paid) AS net_paid, NVL(SUM(ss_coupon_amt), 0) AS coupons, CONCAT_WS('-', CAST(d.d_year AS VARCHAR), LPAD(CAST(d.d_moy AS VARCHAR), 2, '0')) AS ym FROM store_sales ss JOIN date_dim d ON d.d_date_sk = ss.ss_sold_date_sk WHERE d.d_year = 2001 GROUP BY ss_store_sk, d.d_year, d.d_moy",
+   "trace": []
+  }
+ ]
+}

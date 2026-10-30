@@ -1,0 +1,785 @@
+{
+ "aggregate": {
+  "objects": 39,
+  "executes_pct": 64.1,
+  "matches_pct": 64.1,
+  "claimed_migrated_pct": 100.0,
+  "wrong_claimed_migrated": 14,
+  "needs_human_pct": 0.0,
+  "needs_human_but_fine": 0,
+  "calls_per_object": 0,
+  "seconds_per_object": 0.4,
+  "usd_per_object": 0,
+  "by_kind": {
+   "query": {
+    "objects": 31,
+    "matches_pct": 77.4,
+    "wrong_claimed_migrated": 7
+   },
+   "etl": {
+    "objects": 2,
+    "matches_pct": 0.0,
+    "wrong_claimed_migrated": 2
+   },
+   "ddl": {
+    "objects": 6,
+    "matches_pct": 16.7,
+    "wrong_claimed_migrated": 5
+   }
+  }
+ },
+ "objects": [
+  {
+   "id": "Q02",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "2513 rows, 8 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 1.7260296000167727,
+   "cost_usd": 0,
+   "sql": "WITH wscs AS (\n  SELECT\n    sold_date_sk,\n    sales_price\n  FROM (\n    SELECT\n      ws_sold_date_sk AS sold_date_sk,\n      ws_ext_sales_price AS sales_price\n    FROM web_sales\n    UNION ALL\n    SELECT\n      cs_sold_date_sk AS sold_date_sk,\n      cs_ext_sales_price AS sales_price\n    FROM catalog_sales\n  ) AS sq1\n), wswscs AS (\n  SELECT\n    d_week_seq,\n    SUM(CASE WHEN (\n      d_day_name = 'Sunday'\n    ) THEN sales_price ELSE NULL END) AS sun_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Monday'\n    ) THEN sales_price ELSE NULL END) AS mon_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Tuesday'\n    ) THEN sales_price ELSE NULL END) AS tue_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Wednesday'\n    ) THEN sales_price ELSE NULL END) AS wed_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Thursday'\n    ) THEN sales_price ELSE NULL END) AS thu_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Friday'\n    ) THEN sales_price ELSE NULL END) AS fri_sales,\n    SUM(CASE WHEN (\n      d_day_name = 'Saturday'\n    ) THEN sales_price ELSE NULL END) AS sat_sales\n  FROM wscs\n  CROSS JOIN date_dim\n  WHERE\n    d_date_sk = sold_date_sk\n  GROUP BY\n    d_week_seq\n)\nSELECT\n  d_week_seq1,\n  ROUND(sun_sales1 / NULLIF(sun_sales2, 0), 2) AS r1,\n  ROUND(mon_sales1 / NULLIF(mon_sales2, 0), 2) AS r2,\n  ROUND(tue_sales1 / NULLIF(tue_sales2, 0), 2) AS r3,\n  ROUND(wed_sales1 / NULLIF(wed_sales2, 0), 2) AS r4,\n  ROUND(thu_sales1 / NULLIF(thu_sales2, 0), 2) AS r5,\n  ROUND(fri_sales1 / NULLIF(fri_sales2, 0), 2) AS r6,\n  ROUND(sat_sales1 / NULLIF(sat_sales2, 0), 2)\nFROM (\n  SELECT\n    wswscs.d_week_seq AS d_week_seq1,\n    sun_sales AS sun_sales1,\n    mon_sales AS mon_sales1,\n    tue_sales AS tue_sales1,\n    wed_sales AS wed_sales1,\n    thu_sales AS thu_sales1,\n    fri_sales AS fri_sales1,\n    sat_sales AS sat_sales1\n  FROM wswscs\n  CROSS JOIN date_dim\n  WHERE\n    date_dim.d_week_seq = wswscs.d_week_seq AND d_year = 2001\n) AS y\nCROSS JOIN (\n  SELECT\n    wswscs.d_week_seq AS d_week_seq2,\n    sun_sales AS sun_sales2,\n    mon_sales AS mon_sales2,\n    tue_sales AS tue_sales2,\n    wed_sales AS wed_sales2,\n    thu_sales AS thu_sales2,\n    fri_sales AS fri_sales2,\n    sat_sales AS sat_sales2\n  FROM wswscs\n  CROSS JOIN date_dim\n  WHERE\n    date_dim.d_week_seq = wswscs.d_week_seq AND d_year = 2001 + 1\n) AS z\nWHERE\n  d_week_seq1 = d_week_seq2 - 53\nORDER BY\n  d_week_seq1 NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "Q03",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "15 rows, 4 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.14799440000206232,
+   "cost_usd": 0,
+   "sql": "SELECT\n  dt.d_year,\n  item.i_brand_id AS brand_id,\n  item.i_brand AS brand,\n  SUM(ss_ext_sales_price) AS sum_agg\nFROM date_dim AS dt\nCROSS JOIN store_sales\nCROSS JOIN item\nWHERE\n  dt.d_date_sk = store_sales.ss_sold_date_sk\n  AND store_sales.ss_item_sk = item.i_item_sk\n  AND item.i_manufact_id = 128\n  AND dt.d_moy = 11\nGROUP BY\n  dt.d_year,\n  item.i_brand,\n  item.i_brand_id\nORDER BY\n  dt.d_year,\n  sum_agg DESC NULLS LAST,\n  brand_id\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q06",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "12 rows, 2 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.8551642000093125,
+   "cost_usd": 0,
+   "sql": "SELECT\n  a.ca_state AS state,\n  COUNT(*) AS cnt\nFROM customer_address AS a\nCROSS JOIN customer AS c\nCROSS JOIN store_sales AS s\nCROSS JOIN date_dim AS d\nCROSS JOIN item AS i\nWHERE\n  a.ca_address_sk = c.c_current_addr_sk\n  AND c.c_customer_sk = s.ss_customer_sk\n  AND s.ss_sold_date_sk = d.d_date_sk\n  AND s.ss_item_sk = i.i_item_sk\n  AND d.d_month_seq = (\n    SELECT DISTINCT\n      (\n        d_month_seq\n      )\n    FROM date_dim\n    WHERE\n      d_year = 2001 AND d_moy = 1\n  )\n  AND i.i_current_price > 1.2 * (\n    SELECT\n      AVG(j.i_current_price)\n    FROM item AS j\n    WHERE\n      j.i_category = i.i_category\n  )\nGROUP BY\n  a.ca_state\nHAVING\n  COUNT(*) >= 10\nORDER BY\n  cnt NULLS FIRST,\n  a.ca_state NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q09",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 5 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.1644078999524936,
+   "cost_usd": 0,
+   "sql": "SELECT\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 1 AND 20\n    ) > 74129\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 1 AND 20\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 1 AND 20\n    )\n  END AS bucket1,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 21 AND 40\n    ) > 122840\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 21 AND 40\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 21 AND 40\n    )\n  END AS bucket2,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 41 AND 60\n    ) > 56580\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 41 AND 60\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 41 AND 60\n    )\n  END AS bucket3,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 61 AND 80\n    ) > 10097\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 61 AND 80\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 61 AND 80\n    )\n  END AS bucket4,\n  CASE\n    WHEN (\n      SELECT\n        COUNT(*)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 81 AND 100\n    ) > 165306\n    THEN (\n      SELECT\n        AVG(ss_ext_discount_amt)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 81 AND 100\n    )\n    ELSE (\n      SELECT\n        AVG(ss_net_paid)\n      FROM store_sales\n      WHERE\n        ss_quantity BETWEEN 81 AND 100\n    )\n  END AS bucket5\nFROM reason\nWHERE\n  r_reason_sk = 1",
+   "trace": []
+  },
+  {
+   "id": "Q11",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "6 rows, 4 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.16810529999202117,
+   "cost_usd": 0,
+   "sql": "WITH year_total AS (\n  SELECT\n    c_customer_id AS customer_id,\n    c_first_name AS customer_first_name,\n    c_last_name AS customer_last_name,\n    c_preferred_cust_flag AS customer_preferred_cust_flag,\n    c_birth_country AS customer_birth_country,\n    c_login AS customer_login,\n    c_email_address AS customer_email_address,\n    d_year AS dyear,\n    SUM(ss_ext_list_price - ss_ext_discount_amt) AS year_total,\n    's' AS sale_type\n  FROM customer\n  CROSS JOIN store_sales\n  CROSS JOIN date_dim\n  WHERE\n    c_customer_sk = ss_customer_sk AND ss_sold_date_sk = d_date_sk\n  GROUP BY\n    c_customer_id,\n    c_first_name,\n    c_last_name,\n    c_preferred_cust_flag,\n    c_birth_country,\n    c_login,\n    c_email_address,\n    d_year\n  UNION ALL\n  SELECT\n    c_customer_id AS customer_id,\n    c_first_name AS customer_first_name,\n    c_last_name AS customer_last_name,\n    c_preferred_cust_flag AS customer_preferred_cust_flag,\n    c_birth_country AS customer_birth_country,\n    c_login AS customer_login,\n    c_email_address AS customer_email_address,\n    d_year AS dyear,\n    SUM(ws_ext_list_price - ws_ext_discount_amt) AS year_total,\n    'w' AS sale_type\n  FROM customer\n  CROSS JOIN web_sales\n  CROSS JOIN date_dim\n  WHERE\n    c_customer_sk = ws_bill_customer_sk AND ws_sold_date_sk = d_date_sk\n  GROUP BY\n    c_customer_id,\n    c_first_name,\n    c_last_name,\n    c_preferred_cust_flag,\n    c_birth_country,\n    c_login,\n    c_email_address,\n    d_year\n)\nSELECT\n  t_s_secyear.customer_id,\n  t_s_secyear.customer_first_name,\n  t_s_secyear.customer_last_name,\n  t_s_secyear.customer_preferred_cust_flag\nFROM year_total AS t_s_firstyear\nCROSS JOIN year_total AS t_s_secyear\nCROSS JOIN year_total AS t_w_firstyear\nCROSS JOIN year_total AS t_w_secyear\nWHERE\n  t_s_secyear.customer_id = t_s_firstyear.customer_id\n  AND t_s_firstyear.customer_id = t_w_secyear.customer_id\n  AND t_s_firstyear.customer_id = t_w_firstyear.customer_id\n  AND t_s_firstyear.sale_type = 's'\n  AND t_w_firstyear.sale_type = 'w'\n  AND t_s_secyear.sale_type = 's'\n  AND t_w_secyear.sale_type = 'w'\n  AND t_s_firstyear.dyear = 2001\n  AND t_s_secyear.dyear = 2001 + 1\n  AND t_w_firstyear.dyear = 2001\n  AND t_w_secyear.dyear = 2001 + 1\n  AND t_s_firstyear.year_total > 0\n  AND t_w_firstyear.year_total > 0\n  AND CASE\n    WHEN t_w_firstyear.year_total > 0\n    THEN (\n      t_w_secyear.year_total * 1.0000\n    ) / NULLIF(t_w_firstyear.year_total, 0)\n    ELSE 0.0\n  END > CASE\n    WHEN t_s_firstyear.year_total > 0\n    THEN (\n      t_s_secyear.year_total * 1.0000\n    ) / NULLIF(t_s_firstyear.year_total, 0)\n    ELSE 0.0\n  END\nORDER BY\n  t_s_secyear.customer_id NULLS FIRST,\n  t_s_secyear.customer_first_name NULLS FIRST,\n  t_s_secyear.customer_last_name NULLS FIRST,\n  t_s_secyear.customer_preferred_cust_flag NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q12",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.1541908999788575,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  i_item_desc,\n  i_category,\n  i_class,\n  i_current_price,\n  SUM(ws_ext_sales_price) AS itemrevenue,\n  SUM(ws_ext_sales_price) * 100.0000 / NULLIF(SUM(SUM(ws_ext_sales_price)) OVER (PARTITION BY i_class), 0) AS revenueratio\nFROM web_sales\nCROSS JOIN item\nCROSS JOIN date_dim\nWHERE\n  ws_item_sk = i_item_sk\n  AND i_category IN ('Sports', 'Books', 'Home')\n  AND ws_sold_date_sk = d_date_sk\n  AND d_date BETWEEN TRY_CAST('1999-02-22' AS DATE) AND TRY_CAST('1999-03-24' AS DATE)\nGROUP BY\n  i_item_id,\n  i_item_desc,\n  i_category,\n  i_class,\n  i_current_price\nORDER BY\n  i_category,\n  i_class,\n  i_item_id,\n  i_item_desc,\n  revenueratio\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q16",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 2 at position 37 unexpected 'order'. syntax error line 2 at position 43 unexpected 'count'. syntax error line 3 at position 24 unexpected 'AS'. (request_id=4902f879-a6aa-4b43-96ff-fd3d7d33328d, sfqid=01c81251-000e-2246-0000-0002e98ef901)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.13601730001391843,
+   "cost_usd": 0,
+   "sql": "SELECT\n  COUNT(DISTINCT cs_order_number) AS order count,\n  SUM(cs_ext_ship_cost) AS total shipping cost,\n  SUM(cs_net_profit) AS total net profit\nFROM catalog_sales AS cs1\nCROSS JOIN date_dim\nCROSS JOIN customer_address\nCROSS JOIN call_center\nWHERE\n  d_date BETWEEN '2002-02-01' AND TRY_CAST('2002-04-02' AS DATE)\n  AND cs1.cs_ship_date_sk = d_date_sk\n  AND cs1.cs_ship_addr_sk = ca_address_sk\n  AND ca_state = 'GA'\n  AND cs1.cs_call_center_sk = cc_call_center_sk\n  AND cc_county = 'Williamson County'\n  AND EXISTS(\n    SELECT\n      *\n    FROM catalog_sales AS cs2\n    WHERE\n      cs1.cs_order_number = cs2.cs_order_number\n      AND cs1.cs_warehouse_sk <> cs2.cs_warehouse_sk\n  )\n  AND NOT EXISTS(\n    SELECT\n      *\n    FROM catalog_returns AS cr1\n    WHERE\n      cs1.cs_order_number = cr1.cr_order_number\n  )\nORDER BY\n  COUNT(DISTINCT cs_order_number)\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q17",
+   "kind": "query",
+   "features": [
+    "tpcds"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "1 rows, 15 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.17388580000260845,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  i_item_desc,\n  s_state,\n  COUNT(ss_quantity) AS store_sales_quantitycount,\n  AVG(ss_quantity) AS store_sales_quantityave,\n  STDDEV_SAMP(ss_quantity) AS store_sales_quantitystdev,\n  STDDEV_SAMP(ss_quantity) / NULLIF(AVG(ss_quantity), 0) AS store_sales_quantitycov,\n  COUNT(sr_return_quantity) AS store_returns_quantitycount,\n  AVG(sr_return_quantity) AS store_returns_quantityave,\n  STDDEV_SAMP(sr_return_quantity) AS store_returns_quantitystdev,\n  STDDEV_SAMP(sr_return_quantity) / NULLIF(AVG(sr_return_quantity), 0) AS store_returns_quantitycov,\n  COUNT(cs_quantity) AS catalog_sales_quantitycount,\n  AVG(cs_quantity) AS catalog_sales_quantityave,\n  STDDEV_SAMP(cs_quantity) AS catalog_sales_quantitystdev,\n  STDDEV_SAMP(cs_quantity) / NULLIF(AVG(cs_quantity), 0) AS catalog_sales_quantitycov\nFROM store_sales\nCROSS JOIN store_returns\nCROSS JOIN catalog_sales\nCROSS JOIN date_dim AS d1\nCROSS JOIN date_dim AS d2\nCROSS JOIN date_dim AS d3\nCROSS JOIN store\nCROSS JOIN item\nWHERE\n  d1.d_quarter_name = '2001Q1'\n  AND d1.d_date_sk = ss_sold_date_sk\n  AND i_item_sk = ss_item_sk\n  AND s_store_sk = ss_store_sk\n  AND ss_customer_sk = sr_customer_sk\n  AND ss_item_sk = sr_item_sk\n  AND ss_ticket_number = sr_ticket_number\n  AND sr_returned_date_sk = d2.d_date_sk\n  AND d2.d_quarter_name IN ('2001Q1', '2001Q2', '2001Q3')\n  AND sr_customer_sk = cs_bill_customer_sk\n  AND sr_item_sk = cs_item_sk\n  AND cs_sold_date_sk = d3.d_date_sk\n  AND d3.d_quarter_name IN ('2001Q1', '2001Q2', '2001Q3')\nGROUP BY\n  i_item_id,\n  i_item_desc,\n  s_state\nORDER BY\n  i_item_id NULLS FIRST,\n  i_item_desc NULLS FIRST,\n  s_state NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q18",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "rollup",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 11 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 1.0962605999666266,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  ca_country,\n  ca_state,\n  ca_county,\n  AVG(CAST(cs_quantity AS DECIMAL(12, 2))) AS agg1,\n  AVG(CAST(cs_list_price AS DECIMAL(12, 2))) AS agg2,\n  AVG(CAST(cs_coupon_amt AS DECIMAL(12, 2))) AS agg3,\n  AVG(CAST(cs_sales_price AS DECIMAL(12, 2))) AS agg4,\n  AVG(CAST(cs_net_profit AS DECIMAL(12, 2))) AS agg5,\n  AVG(CAST(c_birth_year AS DECIMAL(12, 2))) AS agg6,\n  AVG(CAST(cd1.cd_dep_count AS DECIMAL(12, 2))) AS agg7\nFROM catalog_sales\nCROSS JOIN customer_demographics AS cd1\nCROSS JOIN customer_demographics AS cd2\nCROSS JOIN customer\nCROSS JOIN customer_address\nCROSS JOIN date_dim\nCROSS JOIN item\nWHERE\n  cs_sold_date_sk = d_date_sk\n  AND cs_item_sk = i_item_sk\n  AND cs_bill_cdemo_sk = cd1.cd_demo_sk\n  AND cs_bill_customer_sk = c_customer_sk\n  AND cd1.cd_gender = 'F'\n  AND cd1.cd_education_status = 'Unknown'\n  AND c_current_cdemo_sk = cd2.cd_demo_sk\n  AND c_current_addr_sk = ca_address_sk\n  AND c_birth_month IN (1, 6, 8, 9, 12, 2)\n  AND d_year = 1998\n  AND ca_state IN ('MS', 'IN', 'ND', 'OK', 'NM', 'VA', 'MS')\nGROUP BY\n  ROLLUP (\n    i_item_id,\n    ca_country,\n    ca_state,\n    ca_county\n  )\nORDER BY\n  ca_country NULLS FIRST,\n  ca_state NULLS FIRST,\n  ca_county NULLS FIRST,\n  i_item_id NULLS FIRST,\n  GROUPING(ca_country) NULLS FIRST,\n  GROUPING(ca_state) NULLS FIRST,\n  GROUPING(ca_county) NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q19",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive",
+    "substr"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "10 rows, 5 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.47308750002412125,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_brand_id AS brand_id,\n  i_brand AS brand,\n  i_manufact_id,\n  i_manufact,\n  SUM(ss_ext_sales_price) AS ext_price\nFROM date_dim\nCROSS JOIN store_sales\nCROSS JOIN item\nCROSS JOIN customer\nCROSS JOIN customer_address\nCROSS JOIN store\nWHERE\n  d_date_sk = ss_sold_date_sk\n  AND ss_item_sk = i_item_sk\n  AND i_manager_id = 8\n  AND d_moy = 11\n  AND d_year = 1998\n  AND ss_customer_sk = c_customer_sk\n  AND c_current_addr_sk = ca_address_sk\n  AND SUBSTRING(ca_zip, 1, 5) <> SUBSTRING(s_zip, 1, 5)\n  AND ss_store_sk = s_store_sk\nGROUP BY\n  i_brand,\n  i_brand_id,\n  i_manufact_id,\n  i_manufact\nORDER BY\n  ext_price DESC NULLS LAST,\n  i_brand,\n  i_brand_id,\n  i_manufact_id,\n  i_manufact\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q20",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.3488409999990836,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  i_item_desc,\n  i_category,\n  i_class,\n  i_current_price,\n  SUM(cs_ext_sales_price) AS itemrevenue,\n  SUM(cs_ext_sales_price) * 100.0000 / NULLIF(SUM(SUM(cs_ext_sales_price)) OVER (PARTITION BY i_class), 0) AS revenueratio\nFROM catalog_sales\nCROSS JOIN item\nCROSS JOIN date_dim\nWHERE\n  cs_item_sk = i_item_sk\n  AND i_category IN ('Sports', 'Books', 'Home')\n  AND cs_sold_date_sk = d_date_sk\n  AND d_date BETWEEN TRY_CAST('1999-02-22' AS DATE) AND TRY_CAST('1999-03-24' AS DATE)\nGROUP BY\n  i_item_id,\n  i_item_desc,\n  i_category,\n  i_class,\n  i_current_price\nORDER BY\n  i_category NULLS FIRST,\n  i_class NULLS FIRST,\n  i_item_id NULLS FIRST,\n  i_item_desc NULLS FIRST,\n  revenueratio NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q21",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "32 rows, 4 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.14991310000186786,
+   "cost_usd": 0,
+   "sql": "SELECT\n  *\nFROM (\n  SELECT\n    w_warehouse_name,\n    i_item_id,\n    SUM(\n      CASE\n        WHEN (\n          CAST(d_date AS DATE) < TRY_CAST('2000-03-11' AS DATE)\n        )\n        THEN inv_quantity_on_hand\n        ELSE 0\n      END\n    ) AS inv_before,\n    SUM(\n      CASE\n        WHEN (\n          CAST(d_date AS DATE) >= TRY_CAST('2000-03-11' AS DATE)\n        )\n        THEN inv_quantity_on_hand\n        ELSE 0\n      END\n    ) AS inv_after\n  FROM inventory\n  CROSS JOIN warehouse\n  CROSS JOIN item\n  CROSS JOIN date_dim\n  WHERE\n    i_current_price BETWEEN 0.99 AND 1.49\n    AND i_item_sk = inv_item_sk\n    AND inv_warehouse_sk = w_warehouse_sk\n    AND inv_date_sk = d_date_sk\n    AND d_date BETWEEN TRY_CAST('2000-02-10' AS DATE) AND TRY_CAST('2000-04-10' AS DATE)\n  GROUP BY\n    w_warehouse_name,\n    i_item_id\n) AS x\nWHERE\n  (\n    CASE\n      WHEN inv_before > 0\n      THEN (\n        inv_after * 1.000\n      ) / NULLIF(inv_before, 0)\n      ELSE NULL\n    END\n  ) BETWEEN 2.000 / NULLIF(3.000, 0) AND 3.000 / NULLIF(2.000, 0)\nORDER BY\n  w_warehouse_name NULLS FIRST,\n  i_item_id NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q26",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 5 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.5470135000068694,
+   "cost_usd": 0,
+   "sql": "SELECT\n  i_item_id,\n  AVG(cs_quantity) AS agg1,\n  AVG(cs_list_price) AS agg2,\n  AVG(cs_coupon_amt) AS agg3,\n  AVG(cs_sales_price) AS agg4\nFROM catalog_sales\nCROSS JOIN customer_demographics\nCROSS JOIN date_dim\nCROSS JOIN item\nCROSS JOIN promotion\nWHERE\n  cs_sold_date_sk = d_date_sk\n  AND cs_item_sk = i_item_sk\n  AND cs_bill_cdemo_sk = cd_demo_sk\n  AND cs_promo_sk = p_promo_sk\n  AND cd_gender = 'M'\n  AND cd_marital_status = 'S'\n  AND cd_education_status = 'College'\n  AND (\n    p_channel_email = 'N' OR p_channel_event = 'N'\n  )\n  AND d_year = 2000\nGROUP BY\n  i_item_id\nORDER BY\n  i_item_id\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q27",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.17395780002698302,
+   "cost_usd": 0,
+   "sql": "WITH results AS (\n  SELECT\n    i_item_id,\n    s_state,\n    0 AS g_state,\n    ss_quantity AS agg1,\n    ss_list_price AS agg2,\n    ss_coupon_amt AS agg3,\n    ss_sales_price AS agg4\n  FROM store_sales\n  CROSS JOIN customer_demographics\n  CROSS JOIN date_dim\n  CROSS JOIN store\n  CROSS JOIN item\n  WHERE\n    ss_sold_date_sk = d_date_sk\n    AND ss_item_sk = i_item_sk\n    AND ss_store_sk = s_store_sk\n    AND ss_cdemo_sk = cd_demo_sk\n    AND cd_gender = 'M'\n    AND cd_marital_status = 'S'\n    AND cd_education_status = 'College'\n    AND d_year = 2002\n    AND s_state = 'TN'\n)\nSELECT\n  i_item_id,\n  s_state,\n  g_state,\n  agg1,\n  agg2,\n  agg3,\n  agg4\nFROM (\n  SELECT\n    i_item_id,\n    s_state,\n    0 AS g_state,\n    AVG(agg1) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n  GROUP BY\n    i_item_id,\n    s_state\n  UNION ALL\n  SELECT\n    i_item_id,\n    NULL AS s_state,\n    1 AS g_state,\n    AVG(agg1) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n  GROUP BY\n    i_item_id\n  UNION ALL\n  SELECT\n    NULL AS i_item_id,\n    NULL AS s_state,\n    1 AS g_state,\n    AVG(agg1) AS agg1,\n    AVG(agg2) AS agg2,\n    AVG(agg3) AS agg3,\n    AVG(agg4) AS agg4\n  FROM results\n) AS foo\nORDER BY\n  i_item_id NULLS FIRST,\n  s_state NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q31",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "cte"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "3 rows, 6 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 1.1039204000262544,
+   "cost_usd": 0,
+   "sql": "WITH ss AS (\n  SELECT\n    ca_county,\n    d_qoy,\n    d_year,\n    SUM(ss_ext_sales_price) AS store_sales\n  FROM store_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  WHERE\n    ss_sold_date_sk = d_date_sk AND ss_addr_sk = ca_address_sk\n  GROUP BY\n    ca_county,\n    d_qoy,\n    d_year\n), ws AS (\n  SELECT\n    ca_county,\n    d_qoy,\n    d_year,\n    SUM(ws_ext_sales_price) AS web_sales\n  FROM web_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  WHERE\n    ws_sold_date_sk = d_date_sk AND ws_bill_addr_sk = ca_address_sk\n  GROUP BY\n    ca_county,\n    d_qoy,\n    d_year\n)\nSELECT\n  ss1.ca_county,\n  ss1.d_year,\n  (\n    ws2.web_sales * 1.0000\n  ) / NULLIF(ws1.web_sales, 0) AS web_q1_q2_increase,\n  (\n    ss2.store_sales * 1.0000\n  ) / NULLIF(ss1.store_sales, 0) AS store_q1_q2_increase,\n  (\n    ws3.web_sales * 1.0000\n  ) / NULLIF(ws2.web_sales, 0) AS web_q2_q3_increase,\n  (\n    ss3.store_sales * 1.0000\n  ) / NULLIF(ss2.store_sales, 0) AS store_q2_q3_increase\nFROM ss AS ss1\nCROSS JOIN ss AS ss2\nCROSS JOIN ss AS ss3\nCROSS JOIN ws AS ws1\nCROSS JOIN ws AS ws2\nCROSS JOIN ws AS ws3\nWHERE\n  ss1.d_qoy = 1\n  AND ss1.d_year = 2000\n  AND ss1.ca_county = ss2.ca_county\n  AND ss2.d_qoy = 2\n  AND ss2.d_year = 2000\n  AND ss2.ca_county = ss3.ca_county\n  AND ss3.d_qoy = 3\n  AND ss3.d_year = 2000\n  AND ss1.ca_county = ws1.ca_county\n  AND ws1.d_qoy = 1\n  AND ws1.d_year = 2000\n  AND ws1.ca_county = ws2.ca_county\n  AND ws2.d_qoy = 2\n  AND ws2.d_year = 2000\n  AND ws1.ca_county = ws3.ca_county\n  AND ws3.d_qoy = 3\n  AND ws3.d_year = 2000\n  AND CASE\n    WHEN ws1.web_sales > 0\n    THEN (\n      ws2.web_sales * 1.0000\n    ) / NULLIF(ws1.web_sales, 0)\n    ELSE NULL\n  END > CASE\n    WHEN ss1.store_sales > 0\n    THEN (\n      ss2.store_sales * 1.0000\n    ) / NULLIF(ss1.store_sales, 0)\n    ELSE NULL\n  END\n  AND CASE\n    WHEN ws2.web_sales > 0\n    THEN (\n      ws3.web_sales * 1.0000\n    ) / NULLIF(ws2.web_sales, 0)\n    ELSE NULL\n  END > CASE\n    WHEN ss2.store_sales > 0\n    THEN (\n      ss3.store_sales * 1.0000\n    ) / NULLIF(ss2.store_sales, 0)\n    ELSE NULL\n  END\nORDER BY\n  ss1.ca_county",
+   "trace": []
+  },
+  {
+   "id": "Q33",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "union"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 2 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.1662598999682814,
+   "cost_usd": 0,
+   "sql": "WITH ss AS (\n  SELECT\n    i_manufact_id,\n    SUM(ss_ext_sales_price) AS total_sales\n  FROM store_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  CROSS JOIN item\n  WHERE\n    i_manufact_id IN (\n      SELECT\n        i_manufact_id\n      FROM item\n      WHERE\n        i_category IN ('Electronics')\n    )\n    AND ss_item_sk = i_item_sk\n    AND ss_sold_date_sk = d_date_sk\n    AND d_year = 1998\n    AND d_moy = 5\n    AND ss_addr_sk = ca_address_sk\n    AND ca_gmt_offset = -5\n  GROUP BY\n    i_manufact_id\n), cs AS (\n  SELECT\n    i_manufact_id,\n    SUM(cs_ext_sales_price) AS total_sales\n  FROM catalog_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  CROSS JOIN item\n  WHERE\n    i_manufact_id IN (\n      SELECT\n        i_manufact_id\n      FROM item\n      WHERE\n        i_category IN ('Electronics')\n    )\n    AND cs_item_sk = i_item_sk\n    AND cs_sold_date_sk = d_date_sk\n    AND d_year = 1998\n    AND d_moy = 5\n    AND cs_bill_addr_sk = ca_address_sk\n    AND ca_gmt_offset = -5\n  GROUP BY\n    i_manufact_id\n), ws AS (\n  SELECT\n    i_manufact_id,\n    SUM(ws_ext_sales_price) AS total_sales\n  FROM web_sales\n  CROSS JOIN date_dim\n  CROSS JOIN customer_address\n  CROSS JOIN item\n  WHERE\n    i_manufact_id IN (\n      SELECT\n        i_manufact_id\n      FROM item\n      WHERE\n        i_category IN ('Electronics')\n    )\n    AND ws_item_sk = i_item_sk\n    AND ws_sold_date_sk = d_date_sk\n    AND d_year = 1998\n    AND d_moy = 5\n    AND ws_bill_addr_sk = ca_address_sk\n    AND ca_gmt_offset = -5\n  GROUP BY\n    i_manufact_id\n)\nSELECT\n  i_manufact_id,\n  SUM(total_sales) AS total_sales\nFROM (\n  SELECT\n    *\n  FROM ss\n  UNION ALL\n  SELECT\n    *\n  FROM cs\n  UNION ALL\n  SELECT\n    *\n  FROM ws\n) AS tmp1\nGROUP BY\n  i_manufact_id\nORDER BY\n  total_sales\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q39",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "cte",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "5 rows, 10 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.15739720000419766,
+   "cost_usd": 0,
+   "sql": "WITH inv AS (\n  SELECT\n    w_warehouse_name,\n    w_warehouse_sk,\n    i_item_sk,\n    d_moy,\n    stdev,\n    mean,\n    CASE mean WHEN 0 THEN NULL ELSE stdev / NULLIF(mean, 0) END AS cov\n  FROM (\n    SELECT\n      w_warehouse_name,\n      w_warehouse_sk,\n      i_item_sk,\n      d_moy,\n      STDDEV_SAMP(inv_quantity_on_hand) * 1.000 AS stdev,\n      AVG(inv_quantity_on_hand) AS mean\n    FROM inventory\n    CROSS JOIN item\n    CROSS JOIN warehouse\n    CROSS JOIN date_dim\n    WHERE\n      inv_item_sk = i_item_sk\n      AND inv_warehouse_sk = w_warehouse_sk\n      AND inv_date_sk = d_date_sk\n      AND d_year = 2001\n    GROUP BY\n      w_warehouse_name,\n      w_warehouse_sk,\n      i_item_sk,\n      d_moy\n  ) AS foo\n  WHERE\n    CASE mean WHEN 0 THEN 0 ELSE stdev / NULLIF(mean, 0) END > 1\n)\nSELECT\n  inv1.w_warehouse_sk AS wsk1,\n  inv1.i_item_sk AS isk1,\n  inv1.d_moy AS dmoy1,\n  inv1.mean AS mean1,\n  inv1.cov AS cov1,\n  inv2.w_warehouse_sk,\n  inv2.i_item_sk,\n  inv2.d_moy,\n  inv2.mean,\n  inv2.cov\nFROM inv AS inv1\nCROSS JOIN inv AS inv2\nWHERE\n  inv1.i_item_sk = inv2.i_item_sk\n  AND inv1.w_warehouse_sk = inv2.w_warehouse_sk\n  AND inv1.d_moy = 1\n  AND inv2.d_moy = 1 + 1\nORDER BY\n  inv1.w_warehouse_sk NULLS FIRST,\n  inv1.i_item_sk NULLS FIRST,\n  inv1.d_moy NULLS FIRST,\n  inv1.mean NULLS FIRST,\n  inv1.cov NULLS FIRST,\n  inv2.d_moy NULLS FIRST,\n  inv2.mean NULLS FIRST,\n  inv2.cov NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "Q40",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "nvl",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "44 rows, 4 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.5826011999743059,
+   "cost_usd": 0,
+   "sql": "SELECT\n  w_state,\n  i_item_id,\n  SUM(\n    CASE\n      WHEN (\n        CAST(d_date AS DATE) < TRY_CAST('2000-03-11' AS DATE)\n      )\n      THEN cs_sales_price - COALESCE(cr_refunded_cash, 0)\n      ELSE 0\n    END\n  ) AS sales_before,\n  SUM(\n    CASE\n      WHEN (\n        CAST(d_date AS DATE) >= TRY_CAST('2000-03-11' AS DATE)\n      )\n      THEN cs_sales_price - COALESCE(cr_refunded_cash, 0)\n      ELSE 0\n    END\n  ) AS sales_after\nFROM catalog_sales\nLEFT OUTER JOIN catalog_returns\n  ON (\n    cs_order_number = cr_order_number AND cs_item_sk = cr_item_sk\n  )\nCROSS JOIN warehouse\nCROSS JOIN item\nCROSS JOIN date_dim\nWHERE\n  i_current_price BETWEEN 0.99 AND 1.49\n  AND i_item_sk = cs_item_sk\n  AND cs_warehouse_sk = w_warehouse_sk\n  AND cs_sold_date_sk = d_date_sk\n  AND d_date BETWEEN TRY_CAST('2000-02-10' AS DATE) AND TRY_CAST('2000-04-10' AS DATE)\nGROUP BY\n  w_state,\n  i_item_id\nORDER BY\n  w_state,\n  i_item_id\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q42",
+   "kind": "query",
+   "features": [
+    "tpcds"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 rows, 4 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.14451909996569157,
+   "cost_usd": 0,
+   "sql": "SELECT\n  dt.d_year,\n  item.i_category_id,\n  item.i_category,\n  SUM(ss_ext_sales_price)\nFROM date_dim AS dt\nCROSS JOIN store_sales\nCROSS JOIN item\nWHERE\n  dt.d_date_sk = store_sales.ss_sold_date_sk\n  AND store_sales.ss_item_sk = item.i_item_sk\n  AND item.i_manager_id = 1\n  AND dt.d_moy = 11\n  AND dt.d_year = 2000\nGROUP BY\n  dt.d_year,\n  item.i_category_id,\n  item.i_category\nORDER BY\n  SUM(ss_ext_sales_price) DESC NULLS LAST,\n  dt.d_year,\n  item.i_category_id,\n  item.i_category\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q45",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "substr"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 3 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.9949894000310451,
+   "cost_usd": 0,
+   "sql": "SELECT\n  ca_zip,\n  ca_city,\n  SUM(ws_sales_price)\nFROM web_sales\nCROSS JOIN customer\nCROSS JOIN customer_address\nCROSS JOIN date_dim\nCROSS JOIN item\nWHERE\n  ws_bill_customer_sk = c_customer_sk\n  AND c_current_addr_sk = ca_address_sk\n  AND ws_item_sk = i_item_sk\n  AND (\n    SUBSTRING(ca_zip, 1, 5) IN ('85669', '86197', '88274', '83405', '86475', '85392', '85460', '80348', '81792')\n    OR i_item_id IN (\n      SELECT\n        i_item_id\n      FROM item\n      WHERE\n        i_item_sk IN (2, 3, 5, 7, 11, 13, 17, 19, 23, 29)\n    )\n  )\n  AND ws_sold_date_sk = d_date_sk\n  AND d_qoy = 2\n  AND d_year = 2001\nGROUP BY\n  ca_zip,\n  ca_city\nORDER BY\n  ca_zip,\n  ca_city\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q46",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "set_hive"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 7 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 1.250261600012891,
+   "cost_usd": 0,
+   "sql": "SELECT\n  c_last_name,\n  c_first_name,\n  ca_city,\n  bought_city,\n  ss_ticket_number,\n  amt,\n  profit\nFROM (\n  SELECT\n    ss_ticket_number,\n    ss_customer_sk,\n    ca_city AS bought_city,\n    SUM(ss_coupon_amt) AS amt,\n    SUM(ss_net_profit) AS profit\n  FROM store_sales\n  CROSS JOIN date_dim\n  CROSS JOIN store\n  CROSS JOIN household_demographics\n  CROSS JOIN customer_address\n  WHERE\n    store_sales.ss_sold_date_sk = date_dim.d_date_sk\n    AND store_sales.ss_store_sk = store.s_store_sk\n    AND store_sales.ss_hdemo_sk = household_demographics.hd_demo_sk\n    AND store_sales.ss_addr_sk = customer_address.ca_address_sk\n    AND (\n      household_demographics.hd_dep_count = 4\n      OR household_demographics.hd_vehicle_count = 3\n    )\n    AND date_dim.d_dow IN (6, 0)\n    AND date_dim.d_year IN (1999, 1999 + 1, 1999 + 2)\n    AND store.s_city IN ('Fairview', 'Midway')\n  GROUP BY\n    ss_ticket_number,\n    ss_customer_sk,\n    ss_addr_sk,\n    ca_city\n) AS dn\nCROSS JOIN customer\nCROSS JOIN customer_address AS current_addr\nWHERE\n  ss_customer_sk = c_customer_sk\n  AND customer.c_current_addr_sk = current_addr.ca_address_sk\n  AND current_addr.ca_city <> bought_city\nORDER BY\n  c_last_name NULLS FIRST,\n  c_first_name NULLS FIRST,\n  ca_city NULLS FIRST,\n  bought_city NULLS FIRST,\n  ss_ticket_number NULLS FIRST\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "Q47",
+   "kind": "query",
+   "features": [
+    "tpcds",
+    "backticks",
+    "cte",
+    "window"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "100 rows, 10 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.8240004000253975,
+   "cost_usd": 0,
+   "sql": "WITH v1 AS (\n  SELECT\n    i_category,\n    i_brand,\n    s_store_name,\n    s_company_name,\n    d_year,\n    d_moy,\n    SUM(ss_sales_price) AS sum_sales,\n    AVG(SUM(ss_sales_price)) OVER (PARTITION BY i_category, i_brand, s_store_name, s_company_name, d_year) AS avg_monthly_sales,\n    RANK() OVER (\n      PARTITION BY i_category, i_brand, s_store_name, s_company_name\n      ORDER BY d_year, d_moy\n    ) AS rn\n  FROM item\n  CROSS JOIN store_sales\n  CROSS JOIN date_dim\n  CROSS JOIN store\n  WHERE\n    ss_item_sk = i_item_sk\n    AND ss_sold_date_sk = d_date_sk\n    AND ss_store_sk = s_store_sk\n    AND (\n      d_year = 1999\n      OR (\n        d_year = 1999 - 1 AND d_moy = 12\n      )\n      OR (\n        d_year = 1999 + 1 AND d_moy = 1\n      )\n    )\n  GROUP BY\n    i_category,\n    i_brand,\n    s_store_name,\n    s_company_name,\n    d_year,\n    d_moy\n), v2 AS (\n  SELECT\n    v1.i_category,\n    v1.i_brand,\n    v1.s_store_name,\n    v1.s_company_name,\n    v1.d_year,\n    v1.d_moy,\n    v1.avg_monthly_sales,\n    v1.sum_sales,\n    v1_lag.sum_sales AS psum,\n    v1_lead.sum_sales AS nsum\n  FROM v1\n  CROSS JOIN v1 AS v1_lag\n  CROSS JOIN v1 AS v1_lead\n  WHERE\n    v1.i_category = v1_lag.i_category\n    AND v1.i_category = v1_lead.i_category\n    AND v1.i_brand = v1_lag.i_brand\n    AND v1.i_brand = v1_lead.i_brand\n    AND v1.s_store_name = v1_lag.s_store_name\n    AND v1.s_store_name = v1_lead.s_store_name\n    AND v1.s_company_name = v1_lag.s_company_name\n    AND v1.s_company_name = v1_lead.s_company_name\n    AND v1.rn = v1_lag.rn + 1\n    AND v1.rn = v1_lead.rn - 1\n)\nSELECT\n  *\nFROM v2\nWHERE\n  d_year = 1999\n  AND avg_monthly_sales > 0\n  AND CASE\n    WHEN avg_monthly_sales > 0\n    THEN ABS(sum_sales - avg_monthly_sales) / NULLIF(avg_monthly_sales, 0)\n    ELSE NULL\n  END > 0.1\nORDER BY\n  sum_sales - avg_monthly_sales,\n  1,\n  2,\n  3,\n  4,\n  5,\n  6,\n  7,\n  8,\n  9,\n  10\nLIMIT 100",
+   "trace": []
+  },
+  {
+   "id": "L01",
+   "kind": "query",
+   "features": [
+    "lateral_view",
+    "explode",
+    "collect_set",
+    "size",
+    "cast_string"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 15 at position 0 unexpected 'LATERAL'. (request_id=d2f775bb-821c-4e8b-8b5d-9e0f1df3a8a2, sfqid=01c81252-000e-2229-0000-0002e98e534d)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.1396577000268735,
+   "cost_usd": 0,
+   "sql": "/* top items per store as a delimited string, then exploded back to rows (legacy report feed) */\nSELECT\n  t.ss_store_sk,\n  item_id,\n  ARRAY_SIZE(t.items) AS n_items\nFROM (\n  SELECT\n    ss_store_sk,\n    ARRAY_UNIQUE_AGG(CAST(ss_item_sk AS VARCHAR)) AS items\n  FROM store_sales\n  WHERE\n    ss_sold_date_sk = 2451545 AND ss_item_sk <= 60\n  GROUP BY\n    ss_store_sk\n) AS t\nLATERAL VIEW\nFLATTEN(t.items) e AS item_id\nORDER BY\n  t.ss_store_sk NULLS FIRST,\n  CAST(item_id AS INT) NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L02",
+   "kind": "query",
+   "features": [
+    "collect_set",
+    "sort_array",
+    "concat_ws",
+    "having"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001044 (42P13): SQL compilation error: error line 3 at position 2 Invalid argument types for function 'CONCAT': (ARRAY) (request_id=03979595-dc24-46d0-86c5-72bd34228569, sfqid=01c81252-000e-2229-0000-0002e98e5351)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.13967880001291633,
+   "cost_usd": 0,
+   "sql": "SELECT\n  c.c_customer_id,\n  CONCAT_WS('|', ARRAY_SORT(ARRAY_UNIQUE_AGG(i.i_category), TRUE, TRUE)) AS categories,\n  COUNT(DISTINCT i.i_category) AS n_cat\nFROM store_sales AS ss\nJOIN customer AS c\n  ON c.c_customer_sk = ss.ss_customer_sk\nJOIN item AS i\n  ON i.i_item_sk = ss.ss_item_sk\nWHERE\n  ss.ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND c.c_customer_sk < 400\nGROUP BY\n  c.c_customer_id\nHAVING\n  COUNT(DISTINCT i.i_category) >= 3\nORDER BY\n  n_cat DESC NULLS LAST,\n  c.c_customer_id NULLS FIRST\nLIMIT 50",
+   "trace": []
+  },
+  {
+   "id": "L05",
+   "kind": "query",
+   "features": [
+    "if",
+    "nvl",
+    "isnull",
+    "round"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "002139 (02000): SQL compilation error: Unknown function ISNULL. (request_id=0e68e4b8-920a-4a53-9ea2-96d1791f00a8, sfqid=01c81252-000e-2246-0000-0002e98ef91d)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.13907119998475537,
+   "cost_usd": 0,
+   "sql": "SELECT\n  ss_store_sk,\n  SUM(IFF(ss_net_profit > 0, ss_net_profit, 0)) AS profit,\n  SUM(IFF(ss_net_profit < 0, -ss_net_profit, 0)) AS loss,\n  SUM(COALESCE(ss_coupon_amt, 0)) AS coupons,\n  COUNT(IFF(ISNULL(ss_customer_sk), 1, NULL)) AS anon_sales,\n  ROUND(AVG(COALESCE(ss_ext_discount_amt, 0)), 2) AS avg_disc\nFROM store_sales\nWHERE\n  ss_sold_date_sk BETWEEN 2451545 AND 2451575\nGROUP BY\n  ss_store_sk\nORDER BY\n  ss_store_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L07",
+   "kind": "query",
+   "features": [
+    "lag",
+    "rows_between",
+    "ntile",
+    "dense_rank"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "30 rows, 6 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.15760479995515198,
+   "cost_usd": 0,
+   "sql": "SELECT\n  d_date_sk,\n  daily,\n  daily - LAG(daily, 1) OVER (ORDER BY d_date_sk NULLS FIRST) AS delta,\n  SUM(daily) OVER (ORDER BY d_date_sk NULLS FIRST ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS wk_sum,\n  NTILE(4) OVER (ORDER BY daily NULLS FIRST) AS quartile,\n  DENSE_RANK() OVER (ORDER BY daily DESC NULLS LAST) AS rnk\nFROM (\n  SELECT\n    d_date_sk,\n    SUM(ss_net_paid) AS daily\n  FROM store_sales AS ss\n  JOIN date_dim AS d\n    ON d.d_date_sk = ss.ss_sold_date_sk\n  WHERE\n    d_year = 2001 AND d_moy = 3\n  GROUP BY\n    d_date_sk\n) AS x\nORDER BY\n  d_date_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L08",
+   "kind": "query",
+   "features": [
+    "distribute_by",
+    "sort_by",
+    "having"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "412 rows, 3 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.14118579996284097,
+   "cost_usd": 0,
+   "sql": "SELECT\n  ss_store_sk,\n  ss_item_sk,\n  SUM(ss_quantity) AS qty\nFROM store_sales\nWHERE\n  ss_sold_date_sk BETWEEN 2451545 AND 2451550\nGROUP BY\n  ss_store_sk,\n  ss_item_sk\nHAVING\n  SUM(ss_quantity) > 50",
+   "trace": []
+  },
+  {
+   "id": "L11",
+   "kind": "query",
+   "features": [
+    "cast_timestamp",
+    "hour",
+    "to_date",
+    "interval",
+    "unix_timestamp"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "002139 (02000): SQL compilation error: Unknown function STR_TO_UNIX. (request_id=16030638-462e-490a-8e37-09054de5be62, sfqid=01c81252-000e-2229-0000-0002e98e5359)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.1453955000033602,
+   "cost_usd": 0,
+   "sql": "SELECT\n  t_time_sk,\n  t_time,\n  TRY_CAST(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second) AS TIMESTAMP) AS ts,\n  HOUR(\n    TRY_CAST(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second) AS TIMESTAMP)\n  ) AS h,\n  TRY_TO_DATE(\n    TRY_CAST(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second) AS TIMESTAMP)\n  ) AS dt,\n  TRY_CAST(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second) AS TIMESTAMP) + INTERVAL '90 MINUTE' AS later,\n  STR_TO_UNIX(\n    TRY_CAST(CONCAT('2001-03-15 ', t_hour, ':', t_minute, ':', t_second) AS TIMESTAMP),\n    '%Y-%mstrict-%dstrict %Hstrict:%Mstrict:%Sstrict'\n  ) AS epoch\nFROM time_dim\nWHERE\n  t_time_sk % 3600 = 0\nORDER BY\n  t_time_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L12",
+   "kind": "query",
+   "features": [
+    "int_division",
+    "pmod",
+    "bround",
+    "cast_decimal",
+    "floor_ceil"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "002139 (02000): SQL compilation error: Unknown functions PMOD, BROUND. (request_id=178b055c-1c1d-41d6-a3bf-45c1d8dc82c3, sfqid=01c81252-000e-2246-0000-0002e98ef925)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.1435905999969691,
+   "cost_usd": 0,
+   "sql": "SELECT\n  ss_item_sk,\n  SUM(ss_quantity) / NULLIF(COUNT(*), 0) AS avg_qty_div,\n  PMOD(SUM(ss_quantity), 7) AS m7,\n  ROUND(SUM(ss_net_paid) / NULLIF(COUNT(*), 0), 2) AS avg_paid,\n  BROUND(AVG(ss_list_price), 1) AS banker,\n  CAST(SUM(ss_ext_tax) AS DECIMAL(12, 2)) AS tax,\n  FLOOR(AVG(ss_wholesale_cost)) AS fl,\n  CEIL(AVG(ss_wholesale_cost)) AS ce,\n  ABS(MIN(ss_net_profit)) AS worst\nFROM store_sales\nWHERE\n  ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND ss_item_sk <= 100\nGROUP BY\n  ss_item_sk\nORDER BY\n  ss_item_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L13",
+   "kind": "query",
+   "features": [
+    "percentile_approx",
+    "array_percentiles",
+    "stddev_pop"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001046 (22023): SQL compilation error: Invalid value [ARRAY_CONSTRUCT(0.25, 0.75)] for function 'APPROX_PERCENTILE', parameter 2: Percentile must be a constant numberic value between 0 and 1 inclusive. (request_id=4ff55dd1-bdb6-41a3-9a9c-d58c3f6b2e8b, sfqid=01c81252-000e-2229-0000-0002e98e535d)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.14161430002423003,
+   "cost_usd": 0,
+   "sql": "SELECT\n  ss_store_sk,\n  APPROX_PERCENTILE(ss_net_paid, 0.5) AS median_paid,\n  APPROX_PERCENTILE(ss_net_paid, [0.25, 0.75]) AS quartiles,\n  ROUND(STDDEV_POP(ss_net_paid), 3) AS sd,\n  COUNT(*) AS n\nFROM store_sales\nWHERE\n  ss_sold_date_sk BETWEEN 2451545 AND 2451560 AND NOT ss_net_paid IS NULL\nGROUP BY\n  ss_store_sk\nORDER BY\n  ss_store_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L14",
+   "kind": "query",
+   "features": [
+    "backticks",
+    "reserved_words",
+    "union_distinct",
+    "order_by_position"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "4 rows, 3 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.31589279999025166,
+   "cost_usd": 0,
+   "sql": "SELECT\n  d.d_year AS year,\n  'store' AS channel,\n  COUNT(*) AS count\nFROM store_sales AS s\nJOIN date_dim AS d\n  ON d.d_date_sk = s.ss_sold_date_sk\nWHERE\n  d.d_year IN (2000, 2001) AND s.ss_item_sk < 50\nGROUP BY\n  d.d_year\nUNION\nSELECT\n  d.d_year,\n  'web',\n  COUNT(*)\nFROM web_sales AS w\nJOIN date_dim AS d\n  ON d.d_date_sk = w.ws_sold_date_sk\nWHERE\n  d.d_year IN (2000, 2001) AND w.ws_item_sk < 50\nGROUP BY\n  d.d_year\nORDER BY\n  1 NULLS FIRST,\n  2 NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L16",
+   "kind": "etl",
+   "features": [
+    "set_hive",
+    "create_table_partitioned",
+    "insert_overwrite_static_partition"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 8 at position 9 unexpected 'INT'. (request_id=0c00eb92-bbbc-4e72-82f6-2e4a3a85a3dc, sfqid=01c81252-000e-2229-0000-0002e98e5365)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.3985266999807209,
+   "cost_usd": 0,
+   "sql": "CREATE TABLE IF NOT EXISTS l16_store_daily (\n  ss_store_sk INT,\n  sales_date DATE,\n  net_paid DECIMAL(17, 2),\n  tickets BIGINT\n)\nPARTITION BY (\n  d_year INT\n)\nFILE_FORMAT=();\nINSERT OVERWRITE INTO l16_store_daily PARTITION(d_year = 2001)\nSELECT\n  ss_store_sk,\n  d.d_date,\n  SUM(ss_net_paid),\n  COUNT(DISTINCT ss_ticket_number)\nFROM store_sales AS ss\nJOIN date_dim AS d\n  ON d.d_date_sk = ss.ss_sold_date_sk\nWHERE\n  d.d_year = 2001 AND d.d_moy = 1\nGROUP BY\n  ss_store_sk,\n  d.d_date;\nSELECT\n  *\nFROM l16_store_daily\nORDER BY\n  d_year NULLS FIRST,\n  sales_date NULLS FIRST,\n  ss_store_sk NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "L17",
+   "kind": "etl",
+   "features": [
+    "set_hive",
+    "dynamic_partitions",
+    "insert_overwrite"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 7 at position 9 unexpected 'INT'. syntax error line 7 at position 12 unexpected ','. syntax error line 8 at position 8 unexpected 'INT'. syntax error line 9 at position 0 unexpected ')'. (request_id=1f5757b0-1d9a-4999-8b28-d804942bbd86, sfqid=01c81252-000e-2229-0000-0002e98e536d)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.4315582999843173,
+   "cost_usd": 0,
+   "sql": "CREATE TABLE l17_cat_month (\n  i_category VARCHAR,\n  sales DECIMAL(17, 2),\n  qty BIGINT\n)\nPARTITION BY (\n  d_year INT,\n  d_moy INT\n)\nFILE_FORMAT=();\nINSERT OVERWRITE INTO l17_cat_month PARTITION(d_year, d_moy)\nSELECT\n  i.i_category,\n  SUM(ss.ss_ext_sales_price),\n  SUM(ss.ss_quantity),\n  d.d_year,\n  d.d_moy\nFROM store_sales AS ss\nJOIN date_dim AS d\n  ON d.d_date_sk = ss.ss_sold_date_sk\nJOIN item AS i\n  ON i.i_item_sk = ss.ss_item_sk\nWHERE\n  d.d_year = 2002 AND d.d_moy IN (1, 2)\nGROUP BY\n  i.i_category,\n  d.d_year,\n  d.d_moy;\nSELECT\n  *\nFROM l17_cat_month\nORDER BY\n  d_year NULLS FIRST,\n  d_moy NULLS FIRST,\n  i_category NULLS FIRST",
+   "trace": []
+  },
+  {
+   "id": "D01",
+   "kind": "ddl",
+   "features": [
+    "partitioned_by",
+    "stored_as_parquet",
+    "tblproperties",
+    "column_comment"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 10 at position 12 unexpected 'DATE'. syntax error line 10 at position 16 unexpected ','. syntax error line 11 at position 11 unexpected 'INT'. syntax error line 12 at position 0 unexpected ')'. (request_id=9bafaccb-ef6d-48d2-9131-57e0895ca761, sfqid=01c81252-000e-2229-0000-0002e98e5375)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.4151033999514766,
+   "cost_usd": 0,
+   "sql": "CREATE TABLE IF NOT EXISTS d01_sales_fact (\n  ticket_number BIGINT COMMENT 'store ticket',\n  item_sk INT,\n  customer_sk INT,\n  quantity INT,\n  net_paid DECIMAL(17, 2),\n  sold_ts TIMESTAMP\n)\nPARTITION BY (\n  sale_date DATE,\n  store_sk INT\n)\nFILE_FORMAT=()\nparquet.compression='SNAPPY'\nowner='finance'",
+   "trace": []
+  },
+  {
+   "id": "D02",
+   "kind": "ddl",
+   "features": [
+    "array_type",
+    "map_type",
+    "struct_type",
+    "stored_as_orc"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=15aaf04f-f6d1-45ef-bb47-1ad4b010d42e, sfqid=01c81252-000e-2246-0000-0002e98ef93d)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.4205321000190452,
+   "cost_usd": 0,
+   "sql": "CREATE TABLE d02_customer_profile (\n  customer_id VARCHAR,\n  tags ARRAY(VARCHAR),\n  attributes MAP(VARCHAR, INT),\n  address OBJECT(street VARCHAR, city VARCHAR, zip VARCHAR),\n  scores ARRAY(DOUBLE),\n  updated TIMESTAMP\n)\nFILE_FORMAT=()",
+   "trace": []
+  },
+  {
+   "id": "D03",
+   "kind": "ddl",
+   "features": [
+    "external",
+    "row_format_delimited",
+    "textfile",
+    "location"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 7 at position 4 unexpected 'FORMAT'. syntax error line 7 at position 11 unexpected 'DELIMITED'. syntax error line 7 at position 28 unexpected 'TERMINATED'. syntax error line 7 at position 39 unexpected 'BY'. syntax error line 7 at position 53 unexpected 'TERMINATED'. syntax error line 7 at position 64 unexpected 'BY'. (request_id=c0e82ca6-8727-4852-aa77-3b7587b74111, sfqid=01c81252-000e-2246-0000-0002e98ef941)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.4047487999778241,
+   "cost_usd": 0,
+   "sql": "CREATE EXTERNAL TABLE d03_raw_events (\n  event_id VARCHAR,\n  event_ts VARCHAR,\n  user_id BIGINT,\n  payload VARCHAR\n)\nROW FORMAT DELIMITED FIELDS TERMINATED BY '\\t' LINES TERMINATED BY '\\n'\nFILE_FORMAT=()\nLOCATION='/user/hive/warehouse/raw/events'",
+   "trace": []
+  },
+  {
+   "id": "D06",
+   "kind": "ddl",
+   "features": [
+    "backticked_reserved",
+    "db_qualified",
+    "if_not_exists"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "001003 (42000): SQL compilation error: syntax error line 2 at position 2 unexpected 'order'. syntax error line 5 at position 2 unexpected 'group'. syntax error line 10 at position 7 unexpected 'INT'. (request_id=c5d342c8-48b4-4c58-91c2-5d9b895e59a4, sfqid=01c81252-000e-2246-0000-0002e98ef949)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.39921920001506805,
+   "cost_usd": 0,
+   "sql": "CREATE TABLE IF NOT EXISTS tpcds.d06_orders (\n  order BIGINT,\n  date DATE,\n  user VARCHAR,\n  group VARCHAR,\n  value DOUBLE,\n  comment VARCHAR\n)\nPARTITION BY (\n  year INT\n)\nFILE_FORMAT=()",
+   "trace": []
+  },
+  {
+   "id": "D08",
+   "kind": "ddl",
+   "features": [
+    "nested_complex_types"
+   ],
+   "status": "error",
+   "verdict": "migrated",
+   "evidence": "000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=eab14731-5a3d-4f85-bd0e-490432a29b44, sfqid=01c81252-000e-2246-0000-0002e98ef94d)",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.39666670002043247,
+   "cost_usd": 0,
+   "sql": "CREATE TABLE d08_sessions (\n  session_id VARCHAR,\n  events ARRAY(OBJECT(ts TIMESTAMP, name VARCHAR, props MAP(VARCHAR, VARCHAR))),\n  device OBJECT(os VARCHAR, version VARCHAR, ids ARRAY(VARCHAR)),\n  started TIMESTAMP,\n  ended TIMESTAMP\n)\nFILE_FORMAT=()",
+   "trace": []
+  },
+  {
+   "id": "D09",
+   "kind": "ddl",
+   "features": [
+    "create_view",
+    "nvl",
+    "concat_ws",
+    "lpad"
+   ],
+   "status": "match",
+   "verdict": "migrated",
+   "evidence": "24 rows, 6 columns match",
+   "reason": "transpiled by sqlglot (identifiers unquoted)",
+   "attempts": 1,
+   "calls": 0,
+   "seconds": 0.8061421000165865,
+   "cost_usd": 0,
+   "sql": "CREATE VIEW d09_v_store_month AS\nSELECT\n  ss_store_sk,\n  d.d_year,\n  d.d_moy,\n  SUM(ss_net_paid) AS net_paid,\n  COALESCE(SUM(ss_coupon_amt), 0) AS coupons,\n  CONCAT_WS(\n    '-',\n    COALESCE(CAST(d.d_year AS VARCHAR), ''),\n    COALESCE(LPAD(CAST(d.d_moy AS VARCHAR), 2, '0'), '')\n  ) AS ym\nFROM store_sales AS ss\nJOIN date_dim AS d\n  ON d.d_date_sk = ss.ss_sold_date_sk\nWHERE\n  d.d_year = 2001\nGROUP BY\n  ss_store_sk,\n  d.d_year,\n  d.d_moy",
+   "trace": []
+  }
+ ]
+}
