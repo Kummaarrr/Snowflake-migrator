@@ -5,7 +5,7 @@ conversion**: every object is run on both sides on the same data and the results
 The report says, per object, *migrated (verified)* or *needs a human*, with the diff or error
 attached. A prototype on public TPC-DS data, with every claim measured.
 
-**Write-up:** [docs/REPORT.md](docs/REPORT.md) · **Architecture:** [docs/architecture.md](docs/architecture.md) · **Demo:** `streamlit run app/streamlit_app.py` (live link once deployed)
+**Write-up:** [docs/REPORT.md](docs/REPORT.md) · **Architecture:** [docs/architecture.md](docs/architecture.md) · **Live demo:** https://app-migrator-fadef9kndmndt43cqxet4g.streamlit.app/
 
 ## The story
 
