@@ -17,19 +17,38 @@ SYSTEMS = [
     ("v0-unquoted", "v0+ - sqlglot, identifiers unquoted"),
     ("v0-llm_haiku", "v0-LLM - Haiku 5.5, one call"),
     ("v0-llm_opus", "v0-LLM - Opus 5.5, one call"),
-    ("v1_haiku", "v1 - agent, Haiku 5.5"),
+    ("v1_haiku", "v1 - per-object agent, Haiku 5.5"),
+    ("v2_haiku", "v2 - estate agent, Haiku 5.5"),
 ]
 ROWS = [
     ("executes_pct", "Executes on Snowflake", "%"),
-    ("matches_pct", "**Same result as the source**", "%"),
+    ("matches_pct", "Same result as the source", "%"),
+    ("verified_pct", "**Verified** (migrated, right, verifiable)", "%"),
     ("claimed_migrated_pct", "Claimed migrated", "%"),
     ("wrong_claimed_migrated", "**Wrong but claimed migrated**", "n"),
     ("needs_human_pct", "Handed to a human", "%"),
     ("needs_human_but_fine", "...of which were actually fine", "n"),
+    ("triage_false_positives", "...of which refused at triage wrongly", "n"),
+    ("hand_back_precision_pct", "Hand-back precision", "%"),
+    ("hand_back_recall_pct", "Hand-back recall", "%"),
+    ("hand_back_reason_correct_pct", "Hand-back reason correct", "%"),
+    ("verified_with_mask", "Verified with clock columns masked", "n"),
+    ("order_violations", "Dependency-order violations", "n"),
     ("calls_per_object", "Model calls / object", "x"),
     ("seconds_per_object", "Seconds / object", "s"),
     ("usd_per_object", "$ / object", "$"),
 ]
+
+
+def wilson(p_pct: float, n: int, z: float = 1.96) -> tuple[float, float]:
+    """95% Wilson score interval for a proportion given as a percentage."""
+    if n <= 0:
+        return (0.0, 100.0)
+    p = p_pct / 100
+    denom = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / denom
+    half = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / denom
+    return (max(0.0, 100 * (centre - half)), min(100.0, 100 * (centre + half)))
 
 
 def _load(name: str) -> dict[str, Any] | None:
@@ -67,44 +86,76 @@ def final() -> str:
         "# Final results - test split",
         "",
         f"{n} held-out migration objects (queries, ETL scripts, DDL) never used while building; "
-        "model systems run 3 times independently; mean (range).",
+        "model systems run 3 times independently; mean (range); [95% Wilson interval] on the "
+        "headline rates. Source = local Spark SQL standing in for Hive; Hive write statements run "
+        "through an in-memory emulator on the source (see README notes).",
         "",
         "| Metric | " + " | ".join(label for _, label in present) + " |",
         "|---|" + "---|" * len(present),
     ]
     for key, label, unit in ROWS:
-        cells = [
-            _cell([r["aggregate"][key] for r in runs[k] if r["aggregate"][key] is not None], unit)
-            for k, _ in present
-        ]
+        cells = []
+        for k, _ in present:
+            vals = [r["aggregate"][key] for r in runs[k] if r["aggregate"].get(key) is not None]
+            cell = _cell(vals, unit)
+            if unit == "%" and vals and key in ("verified_pct", "matches_pct"):
+                lo, hi = wilson(statistics.mean(vals), runs[k][0]["aggregate"]["objects"])
+                cell += f" [{lo:.0f}-{hi:.0f}]"
+            cells.append(cell)
         lines.append(f"| {label} | " + " | ".join(cells) + " |")
-    lines += [
-        "",
-        "By kind, % with the same result as the source:",
-        "",
-        "| Kind | " + " | ".join(label for _, label in present) + " |",
-        "|---|" + "---|" * len(present),
-    ]
-    for kind in ("query", "etl", "ddl"):
-        cells = [
-            _cell(
-                [r["aggregate"]["by_kind"].get(kind, {}).get("matches_pct") or 0 for r in runs[k]],
-                "%",
-            )
-            for k, _ in present
+    for group, title in (
+        ("by_estate", "estate"),
+        ("by_kind", "kind"),
+        ("by_category", "truth category"),
+    ):
+        keys = sorted(
+            {key for k, _ in present for r in runs[k] for key in r["aggregate"].get(group, {})}
+        )
+        if not keys:
+            continue
+        lines += [
+            "",
+            f"By {title}: verified % (wrong-but-claimed-migrated count):",
+            "",
+            f"| {title} | " + " | ".join(label for _, label in present) + " |",
+            "|---|" + "---|" * len(present),
         ]
-        lines.append(f"| {kind} | " + " | ".join(cells) + " |")
+        for key in keys:
+            cells = []
+            for k, _ in present:
+                groups = [r["aggregate"].get(group, {}).get(key) for r in runs[k]]
+                groups = [g for g in groups if g]
+                if not groups:
+                    cells.append("-")
+                    continue
+                ver = _cell([g.get("verified_pct") or 0 for g in groups], "%")
+                wrong = _cell([g.get("wrong_claimed_migrated", 0) for g in groups], "n")
+                cells.append(f"{ver} ({wrong})")
+            n_obj = next(
+                (
+                    g["objects"]
+                    for k, _ in present
+                    for g in [r["aggregate"].get(group, {}).get(key) for r in runs[k]]
+                    if g
+                ),
+                "",
+            )
+            lines.append(f"| {key} (n={n_obj}) | " + " | ".join(cells) + " |")
     lines += ["", "Runs available: " + ", ".join(f"{k} x{len(runs[k])}" for k, _ in present)]
     return "\n".join(lines) + "\n"
 
 
 def ablation() -> str:
     variants = [
-        ("v1_haiku_dev", "v1 (all steps)"),
-        ("v1-nodraft_haiku_dev", "without the sqlglot draft (model drafts)"),
-        ("v1-nofeedback_haiku_dev", "repairs without the error / diff text"),
-        ("v1-nodiff_haiku_dev", "without data-diff repairs (errors only)"),
-        ("v1-noescalate_haiku_dev", "without escalation to Sonnet"),
+        ("v2_haiku_dev", "**v2 (all steps)**"),
+        ("v2-notriage_haiku_dev", "v2 without triage (every object converted)"),
+        (
+            "v2-nodoublerun_haiku_dev",
+            "v2 without source probes (rules only, no tie / double-run checks)",
+        ),
+        ("v2-noorder_haiku_dev", "v2 without dependency ordering (file order, no re-verification)"),
+        ("v2-noreverify_haiku_dev", "v2 without dependency ordering, with re-verification"),
+        ("v1_haiku_dev", "v1 per-object agent (reference)"),
         ("v0_dev", "v0 sqlglot (reference)"),
         ("v0-unquoted_dev", "v0+ sqlglot unquoted (reference)"),
         ("v0-llm_haiku_dev", "v0-LLM Haiku (reference)"),
@@ -113,16 +164,17 @@ def ablation() -> str:
     lines = [
         "# Ablation - dev split (one run each)",
         "",
-        "| Variant | Same result | Wrong but claimed migrated | Handed to a human | Calls/object | $/object |",
-        "|---|---|---|---|---|---|",
+        "| Variant | Verified | Wrong but claimed migrated | Handed to a human | Hand-back precision / recall | Order violations | Calls/object | $/object |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for name, label in variants:
         r = _load(name)
         if r:
             a = r["aggregate"]
             lines.append(
-                f"| {label} | {a['matches_pct']}% | {a['wrong_claimed_migrated']} | "
-                f"{a['needs_human_pct']}% | {a['calls_per_object']} | ${a['usd_per_object']:.4f} |"
+                f"| {label} | {a.get('verified_pct', a['matches_pct'])}% | {a['wrong_claimed_migrated']} | "
+                f"{a['needs_human_pct']}% | {a.get('hand_back_precision_pct')}% / {a.get('hand_back_recall_pct')}% | "
+                f"{a.get('order_violations', 0)} | {a['calls_per_object']} | ${a['usd_per_object']:.4f} |"
             )
     return "\n".join(lines) + "\n"
 

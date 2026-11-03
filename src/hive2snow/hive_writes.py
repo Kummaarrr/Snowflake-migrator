@@ -22,6 +22,19 @@ _INSERT = re.compile(
     r"(?:PARTITION\s*\((?P<part>[^)]*)\))?\s*(?P<body>(?:SELECT|WITH|VALUES|\().*)$",
     re.IGNORECASE | re.DOTALL,
 )
+_MULTI = re.compile(
+    r"^\s*FROM\s+(?P<src>.+?)\s+(?=INSERT\s+(OVERWRITE|INTO)\b)(?P<inserts>.*)$",
+    re.IGNORECASE | re.DOTALL,
+)
+_MULTI_PART = re.compile(
+    r"INSERT\s+(OVERWRITE|INTO)\s+(?:TABLE\s+)?(?P<table>[`\w.]+)\s*"
+    r"(?:PARTITION\s*\((?P<part>[^)]*)\))?\s*(?P<body>SELECT\b.*?)"
+    r"(?=INSERT\s+(?:OVERWRITE|INTO)\b|$)",
+    re.IGNORECASE | re.DOTALL,
+)
+_CLAUSE = re.compile(
+    r"\b(WHERE|GROUP\s+BY|HAVING|ORDER\s+BY|DISTRIBUTE\s+BY|SORT\s+BY|LIMIT)\b", re.IGNORECASE
+)
 _DROP = re.compile(r"^\s*DROP\s+(TABLE|VIEW)\s+(IF\s+EXISTS\s+)?(?P<table>[`\w.]+)", re.IGNORECASE)
 _VIEW = re.compile(
     r"^\s*CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:IF\s+NOT\s+EXISTS\s+)?(?P<table>[`\w.]+)\s+AS\s+(?P<body>.*)$",
@@ -78,10 +91,53 @@ def _name(raw: str) -> str:
     return raw.replace("`", "").split(".")[-1].lower()
 
 
+_HIVEVAR = re.compile(
+    r"^\s*SET\s+(?:hivevar|hiveconf):(?P<name>\w+)\s*=\s*(?P<value>.*?)\s*$", re.IGNORECASE | re.S
+)
+_MACRO = re.compile(
+    r"^\s*CREATE\s+TEMPORARY\s+MACRO\s+(?P<name>\w+)\s*\((?P<params>[^)]*)\)\s*(?P<body>.*)$",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def preprocess(statements: list[str]) -> list[str]:
+    """Two Hive CLI features Spark SQL lacks: `SET hivevar:x=v` + `${hivevar:x}` substitution,
+    and `CREATE TEMPORARY MACRO name(params) body` expanded at its call sites (one level of
+    parentheses in the arguments). Both statements are consumed."""
+    variables: dict[str, str] = {}
+    macros: dict[str, tuple[list[str], str]] = {}
+    out: list[str] = []
+    for statement in statements:
+        if m := _HIVEVAR.match(statement):
+            variables[m.group("name")] = m.group("value").strip("'\"")
+            continue
+        if m := _MACRO.match(statement):
+            params = [
+                p.strip().split()[0].strip("`") for p in m.group("params").split(",") if p.strip()
+            ]
+            macros[m.group("name").lower()] = (params, m.group("body").strip())
+            continue
+        for name, value in variables.items():
+            statement = re.sub(r"\$\{(?:hivevar:|hiveconf:)?" + name + r"\}", value, statement)
+        for name, (params, body) in macros.items():
+
+            def expand(call: re.Match[str], params: list[str] = params, body: str = body) -> str:
+                args = [a.strip() for a in call.group(1).split(",")] if params else []
+                expanded = body
+                for p, a in zip(params, args, strict=False):
+                    expanded = re.sub(r"\b" + re.escape(p) + r"\b", f"({a})", expanded)
+                return f"({expanded})"
+
+            statement = re.sub(r"\b" + name + r"\s*\(([^()]*)\)", expand, statement, flags=re.I)
+        out.append(statement)
+    return out
+
+
 def is_write(statement: str) -> bool:
     return bool(
         _SET.match(statement)
         or _INSERT.match(statement)
+        or _MULTI.match(statement)
         or _DROP.match(statement)
         or _VIEW.match(statement)
         or _CTAS.match(statement)
@@ -98,6 +154,23 @@ def execute(session: Any, statement: str) -> Any:
     if m := _VIEW.match(statement):  # a view over temp views must itself be temporary
         df = _materialize(session, session.sql(m.group("body")))
         df.createOrReplaceTempView(_name(m.group("table")))
+        return df
+    if m := _MULTI.match(statement):  # Hive multi-insert: one source scan, several targets
+        src = m.group("src").strip()
+        df = None
+        for part in _MULTI_PART.finditer(m.group("inserts")):
+            body = part.group("body").strip()
+            # "SELECT ... [WHERE / GROUP BY ...]" -> "SELECT ... FROM src [WHERE / GROUP BY ...]"
+            clause = _CLAUSE.search(body)
+            select = body[: clause.start()] if clause else body
+            tail = body[clause.start() :] if clause else ""
+            df = _insert(
+                session,
+                part.group(1).upper() == "OVERWRITE",
+                _name(part.group("table")),
+                part.group("part"),
+                f"{select} FROM {src} {tail}".strip(),
+            )
         return df
     if m := _INSERT.match(statement):
         return _insert(
@@ -156,15 +229,17 @@ def _insert(session: Any, overwrite: bool, table: str, part: str | None, body: s
                 static[k.strip().strip("`")] = v.strip()
             else:
                 dynamic.append(item.strip("`"))
-    for k, v in static.items():
-        new = new.withColumn(k, F.expr(v))
     exists = session.catalog.tableExists(table)
     if exists:
         old = session.table(table)
         cols = list(old.columns)  # the table's order: data columns, then partition columns
-        # Hive INSERT is positional: the SELECT's columns (plus the static partition values
-        # appended above) line up with the table's columns in order
-        new = new.toDF(*cols) if len(new.columns) == len(cols) else new
+        # Hive INSERT is positional: the SELECT's columns line up with the table's data columns
+        # and then its dynamic partition columns, in table order; static partition values are
+        # not in the SELECT and are filled in from the PARTITION clause
+        selected = [c for c in cols if c not in static]
+        new = new.toDF(*selected) if len(new.columns) == len(selected) else new
+        for k, v in static.items():
+            new = new.withColumn(k, F.expr(v))
         new = new.select(*cols)
         if overwrite:
             if static or dynamic:  # replace only the affected partitions
@@ -176,6 +251,8 @@ def _insert(session: Any, overwrite: bool, table: str, part: str | None, body: s
                 old = old.limit(0)
         merged = old.unionByName(new)
     else:
+        for k, v in static.items():
+            new = new.withColumn(k, F.expr(v))
         merged = new
     merged = _materialize(session, merged)
     merged.createOrReplaceTempView(table)

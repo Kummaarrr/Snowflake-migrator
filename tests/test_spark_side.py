@@ -38,6 +38,40 @@ def test_insert_overwrite_static_partition_replaces_only_that_partition(s):
     assert r.frame is not None and r.frame.values.tolist() == [[3, "c", 2000], [2, "b", 2001]]
 
 
+def test_mixed_static_and_dynamic_partition_spec_maps_columns_by_position(s):
+    """PARTITION (y = 2001, m): the SELECT supplies the data columns then m; y comes from the
+    clause; only the (y, m) partitions written are replaced (Hive semantics)."""
+    s.reset()
+    r = s.run(
+        """
+        SET hive.exec.dynamic.partition.mode=nonstrict;
+        CREATE TABLE t_mixed (k INT, q BIGINT) PARTITIONED BY (y INT, m INT) STORED AS PARQUET;
+        INSERT OVERWRITE TABLE t_mixed PARTITION (y = 2000, m) SELECT 1, 10, 12;
+        INSERT OVERWRITE TABLE t_mixed PARTITION (y = 2001, m)
+          SELECT 2, 20, 1 UNION ALL SELECT 3, 30, 2;
+        INSERT OVERWRITE TABLE t_mixed PARTITION (y = 2001, m) SELECT 4, 40, 2;
+        SELECT k, q, y, m FROM t_mixed ORDER BY y, m, k
+        """
+    )
+    assert r.ok, r.error
+    assert r.frame is not None
+    assert r.frame.values.tolist() == [[1, 10, 2000, 12], [2, 20, 2001, 1], [4, 40, 2001, 2]]
+
+
+def test_hivevar_substitution_and_temporary_macro_on_the_source(s):
+    s.reset()
+    r = s.run(
+        """
+        SET hivevar:lim=2;
+        CREATE TEMPORARY MACRO twice(x INT) x * 2;
+        SELECT twice(x) AS d FROM (SELECT 1 AS x UNION ALL SELECT 2 UNION ALL SELECT 3) t
+        WHERE x <= ${hivevar:lim} ORDER BY d
+        """
+    )
+    assert r.ok, r.error
+    assert r.frame is not None and r.frame["d"].tolist() == [2, 4]
+
+
 def test_dynamic_partitions_and_insert_into(s):
     s.reset()
     r = s.run(

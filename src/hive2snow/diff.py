@@ -89,9 +89,33 @@ def _sort_key(row: tuple) -> tuple:
     )
 
 
-def compare(source: pd.DataFrame, target: pd.DataFrame, ordered: bool) -> Diff:
+def compare(
+    source: pd.DataFrame,
+    target: pd.DataFrame,
+    ordered: bool,
+    order_positions: list[int] | None = None,
+) -> Diff:
+    """`order_positions`: output positions of the ORDER BY keys when they are known. Then an
+    ordered compare checks the key sequence row by row and the full rows as a multiset, so rows
+    tied on the keys may come in either order (both engines are right); without positions an
+    ordered compare is strict, row by row."""
     s_rows = [tuple(_norm(v) for v in row) for row in source.itertuples(index=False, name=None)]
     t_rows = [tuple(_norm(v) for v in row) for row in target.itertuples(index=False, name=None)]
+    if ordered and order_positions and source.shape[1] == target.shape[1]:
+        if len(s_rows) == len(t_rows):
+            for i, (a, b) in enumerate(zip(s_rows, t_rows, strict=True)):
+                for j in order_positions:
+                    if j < len(a) and not _cell_equal(a[j], b[j]):
+                        col = source.columns[j]
+                        return Diff(
+                            False,
+                            f"order differs at row {i + 1}: sort key {col} is {a[j]!r} in the "
+                            f"source, {b[j]!r} in the target",
+                            [],
+                            len(s_rows),
+                            len(t_rows),
+                        )
+        ordered = False  # keys agree in sequence: compare the rows as a multiset
     if source.shape[1] != target.shape[1]:
         return Diff(
             False,

@@ -23,7 +23,18 @@ import pandas as pd
 from hive2snow import hive_writes
 from hive2snow.config import GENERATED, Env, prepare_spark_env
 
-PARQUET_DIR = GENERATED / "tpcds_parquet"
+PARQUET_DIR = GENERATED / "tpcds_parquet"  # scale 0.1 (default dataset "sf01")
+DATASETS = {"sf01": ("tpcds_parquet", "TPCDS"), "sf1": ("tpcds_parquet_sf1", "TPCDS_SF1")}
+
+
+def parquet_dir(dataset: str) -> Path:
+    return GENERATED / DATASETS[dataset][0]
+
+
+def snowflake_schema(dataset: str) -> str:
+    return DATASETS[dataset][1]
+
+
 SPARK_WAREHOUSE = GENERATED / "spark_warehouse"
 
 
@@ -87,15 +98,21 @@ class Spark:
             .config("spark.sql.legacy.timeParserPolicy", "LEGACY")
             .getOrCreate()
         )
-        self._register_views()
+        self.dataset = ""
+        self.use("sf01")
 
-    def _register_views(self) -> None:
-        for path in sorted(PARQUET_DIR.glob("*.parquet")):
+    def use(self, dataset: str) -> None:
+        """Point the TPC-DS table names at one dataset (scale 0.1 or 1)."""
+        if dataset == self.dataset:
+            return
+        self.reset()
+        for path in sorted(parquet_dir(dataset).glob("*.parquet")):
             self.session.read.parquet(path.as_posix()).createOrReplaceTempView(path.stem)
+        self.dataset = dataset
 
     def run(self, sql: str) -> RunResult:
         start = time.perf_counter()
-        statements = split_statements(sql)
+        statements = hive_writes.preprocess(split_statements(sql))
         try:
             frame = None
             for statement in statements:
@@ -113,7 +130,7 @@ class Spark:
 
     def reset(self) -> None:
         """Drop the views an ETL object created, keep the TPC-DS tables."""
-        base = {p.stem for p in PARQUET_DIR.glob("*.parquet")}
+        base = {p.stem for p in parquet_dir(self.dataset or "sf01").glob("*.parquet")}
         for t in self.session.catalog.listTables():
             if t.name not in base:
                 self.session.catalog.dropTempView(t.name)
@@ -139,6 +156,15 @@ class Snowflake:
         self.env = Env()
         self.schema = schema or self.env.snowflake_schema
         self._con: Any = None
+
+    def use(self, dataset: str) -> None:
+        """Switch the working schema to a dataset's tables (objects create their own tables
+        there too, so an estate's objects see each other)."""
+        schema = snowflake_schema(dataset)
+        if schema != self.schema or self._con is None:
+            self.schema = schema
+            self.connect()
+            self._con.cursor().execute(f"USE SCHEMA {self.env.snowflake_database}.{self.schema}")
 
     def connect(self) -> Any:
         if self._con is not None:
@@ -169,23 +195,36 @@ class Snowflake:
         cur.execute(f"USE SCHEMA {self.env.snowflake_database}.{self.schema}")
         return self._con
 
-    def run(self, sql: str, timeout_s: int = 120) -> RunResult:
+    TRANSIENT = ("failed to communicate", "chunk data", "error getting next batch", "timed out")
+
+    def run(self, sql: str, timeout_s: int = 120, retries: int = 2) -> RunResult:
+        """Run a script; the last statement's result is returned. A transport hiccup (a result
+        chunk that fails to download, a dropped connection) is retried, since it says nothing
+        about the SQL; SQL errors are returned at once."""
         start = time.perf_counter()
         statements = split_statements(sql)
-        try:
-            cur = self.connect().cursor()
-            frame = None
-            for statement in statements:
-                cur.execute(statement, timeout=timeout_s)
-                frame = cur.fetch_pandas_all() if cur.description else pd.DataFrame()
-            assert frame is not None
-            return RunResult(True, _lower(frame), "", time.perf_counter() - start, len(statements))
-        except Exception as e:
-            # Snowflake errors span lines ("SQL compilation error:" / detail): keep the detail
-            text = " ".join(str(e).split())[:700] if str(e).strip() else type(e).__name__
-            if "connection" in text.lower() or "closed" in text.lower():
-                self._con = None
-            return RunResult(False, None, text, time.perf_counter() - start, len(statements))
+        for attempt in range(retries + 1):
+            try:
+                cur = self.connect().cursor()
+                frame = None
+                for statement in statements:
+                    cur.execute(statement, timeout=timeout_s)
+                    frame = cur.fetch_pandas_all() if cur.description else pd.DataFrame()
+                assert frame is not None
+                return RunResult(
+                    True, _lower(frame), "", time.perf_counter() - start, len(statements)
+                )
+            except Exception as e:
+                # Snowflake errors span lines ("SQL compilation error:" / detail): keep the detail
+                text = " ".join(str(e).split())[:700] if str(e).strip() else type(e).__name__
+                low = text.lower()
+                if "connection" in low or "closed" in low or any(t in low for t in self.TRANSIENT):
+                    self._con = None
+                    if attempt < retries and any(t in low for t in self.TRANSIENT):
+                        time.sleep(5 * (attempt + 1))
+                        continue
+                return RunResult(False, None, text, time.perf_counter() - start, len(statements))
+        raise AssertionError("unreachable")
 
     def execute(self, sql: str) -> None:
         r = self.run(sql)

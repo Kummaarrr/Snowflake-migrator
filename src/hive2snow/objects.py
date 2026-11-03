@@ -28,6 +28,21 @@ class MigrationObject:
     ddl_table: str = ""  # ddl: the table to DESCRIBE (empty for views, compared by content)
     check_sql: str = ""  # ddl view: the SELECT that compares content
     split: str = "dev"
+    # v2: estates
+    estate: str = "C"  # A retail analytics (layered) | B legacy ETL (traps) | C reporting
+    dataset: str = "sf01"  # TPC-DS scale the object runs against: sf01 | sf1
+    # ground truth: convertible | maskable (convertible once clock columns are masked) |
+    # unconvertible | needs_config | nondeterministic | blocked (depends on an unconvertible)
+    category: str = "convertible"
+    depends_on: list[str] = field(default_factory=list)  # object ids this one reads from
+    reads: list[str] = field(default_factory=list)  # tables / views read (extracted)
+    large: bool = False  # verify in-warehouse (aggregates + sample) instead of pulling rows
+    expected_reason: str = ""  # why a human is needed (every category but convertible)
+    mask_columns: list[str] = field(default_factory=list)  # maskable: output columns to ignore
+
+    @property
+    def should_hand_back(self) -> bool:
+        return self.category not in ("convertible", "maskable")
 
 
 LEGACY: list[MigrationObject] = [

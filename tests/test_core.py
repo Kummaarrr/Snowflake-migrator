@@ -16,7 +16,7 @@ from hive2snow.systems import sqlglot_transpile
 def test_diff_tolerates_engine_representation_differences():
     a = pd.DataFrame({"x": [Decimal("1.10"), None], "d": [dt.date(2001, 1, 1), dt.date(2001, 1, 2)],
                       "s": ["abc ", "d"], "b": [True, False]})  # fmt: skip
-    b = pd.DataFrame({"X": [1.1000001, None], "D": [pd.Timestamp("2001-01-01"), pd.Timestamp("2001-01-02")],  # noqa: E501
+    b = pd.DataFrame({"X": [1.1000001, None], "D": [pd.Timestamp("2001-01-01"), pd.Timestamp("2001-01-02")],
                       "S": ["abc", "d"], "B": [1, 0]})  # fmt: skip
     assert diff.compare(a, b, ordered=True).match
 
@@ -55,7 +55,7 @@ def test_expected_columns_include_partitions_and_map_types():
 
 
 def test_hiveify_is_deterministic_and_parses():
-    sql = "SELECT COALESCE(a, 0) AS a, SUBSTRING(b, 1, 3) FROM t WHERE d > CAST('2000-01-01' AS DATE) + INTERVAL 30 DAY"  # noqa: E501
+    sql = "SELECT COALESCE(a, 0) AS a, SUBSTRING(b, 1, 3) FROM t WHERE d > CAST('2000-01-01' AS DATE) + INTERVAL 30 DAY"
     one, two = hiveify(sql, 7), hiveify(sql, 7)
     assert one == two and "nvl(" in one.lower() and "date_add(" in one.lower()
 

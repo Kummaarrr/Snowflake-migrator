@@ -104,8 +104,13 @@ def _feedback(kind: str, text: str, cfg: Config) -> str:
     )
 
 
-def migrate(obj: MigrationObject, sf: Snowflake, cfg: Config | None = None) -> Conversion:
+def migrate(
+    obj: MigrationObject, sf: Snowflake, cfg: Config | None = None, mask: list[str] | None = None
+) -> Conversion:
+    """`mask`: output columns the caller (v2 triage) decided to leave out of the comparison -
+    clock columns such as load_ts; the verdict says so. Default: compare every column."""
     cfg = cfg or Config()
+    mask = mask or []
     calls: list[CallInfo] = []
     trace: list[dict] = []
     current = ""
@@ -118,7 +123,7 @@ def migrate(obj: MigrationObject, sf: Snowflake, cfg: Config | None = None) -> C
             DRAFT_PROMPT.format(hive=obj.hive_sql),
             Repair,
             system=SYSTEM,
-            max_tokens=8000,
+            max_tokens=16000,
         )
         calls.append(info)
         current = out.snowflake_sql
@@ -135,7 +140,7 @@ def migrate(obj: MigrationObject, sf: Snowflake, cfg: Config | None = None) -> C
     attempt, error_used, diff_used = 1, 0, 0
     last_kind, last_text = "", ""
     while True:
-        outcome = harness.evaluate(sf, obj, current)
+        outcome = harness.evaluate(sf, obj, current, mask)
         trace.append(
             {
                 "step": "run",
@@ -145,14 +150,10 @@ def migrate(obj: MigrationObject, sf: Snowflake, cfg: Config | None = None) -> C
             }
         )
         if outcome.status == "match":
-            return Conversion(
-                current,
-                "migrated",
-                f"target result equals the source result ({outcome.evidence})",
-                calls,
-                attempt,
-                trace,
-            )
+            how = (
+                f"verified with clock columns masked ({', '.join(mask)}): " if mask else ""
+            ) + f"target result equals the source result ({outcome.evidence})"
+            return Conversion(current, "migrated", how, calls, attempt, trace)
         kind = "error" if outcome.status == "error" else "diff"
         budget_left = (
             (cfg.error_rounds - error_used) if kind == "error" else (cfg.diff_rounds - diff_used)
@@ -172,7 +173,7 @@ def migrate(obj: MigrationObject, sf: Snowflake, cfg: Config | None = None) -> C
             attempt=attempt,
             feedback=_feedback(kind, outcome.evidence, cfg),
         )
-        out, info = parse_full(model, prompt, Repair, system=SYSTEM, max_tokens=8000)
+        out, info = parse_full(model, prompt, Repair, system=SYSTEM, max_tokens=16000)
         calls.append(info)
         attempt += 1
         trace.append(

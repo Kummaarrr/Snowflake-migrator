@@ -1,0 +1,649 @@
+[12:38] chain start
+[12:38] ######## --system v2 --model haiku --split test --tag r2
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v2 / claude-haiku-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 85.9% |
+| Same result as the source | 85.9% |
+| **Verified** (migrated, right, verifiable) | 85.9% (2 with clock columns masked) |
+| Claimed migrated | 85.9% |
+| **Wrong but claimed migrated** | 0 |
+| Handed to a human | 14.1% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 91.7% / 100.0% (must hand back: 11) |
+| Hand-back reason correct | 100.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 0.47 |
+| Seconds / object | 33.2 |
+| $ / object | 0.0006 |
+By estate: A: 82.4% verified of 17, 0 wrong claims, 17.6% handed back (precision 100.0%), $0.0027, B: 71.0% verified of 31, 0 wrong claims, 29.0% handed back (precision 88.9%), $0.0139, C: 100.0% verified of 37, 0 wrong claims, 0.0% handed back (precision None%), $0.0324
+By kind: query 87.2% verified of 78 (0 wrong claims), etl 83.3% verified of 6 (0 wrong claims), ddl 0.0% verified of 1 (0 wrong claims)
+Truth x decision: | migrated | hb_unconvertible | hb_needs_config | hb_nondeterministic | hb_blocked | hb_failed |
+  convertible      |    71    |        0         |        0        |          0          |     0      |     1     |
+  maskable         |    2     |        0         |        0        |          0          |     0      |     0     |
+  unconvertible    |    0     |        2         |        0        |          0          |     0      |     0     |
+  needs_config     |    0     |        0         |        1        |          0          |     0      |     0     |
+  nondeterministic |    0     |        0         |        0        |          5          |     0      |     0     |
+  blocked          |    0     |        0         |        0        |          0          |     3      |     0     |
+44 calls (4 cached), 109,539 in / 93,084 out tokens, $0.2135  ->  evals/results/v2_haiku_test_r2.json
+  B43   B conver error    handed-back     system error: RuntimeError: claude-sonnet-5-5: no parsed output (stop_reason=max_tokens)
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 51384)
+ERROR:root:Exception while sending command.
+    answer = smart_decode(self.stream.readline()[:-1])
+    return self._sock.recv_into(b)
+    response = connection.send_command(command)
+    raise Py4JNetworkError(
+py4j.protocol.Py4JNetworkError: Error while sending or receiving
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[13:26] exit=0
+[13:26] committed: test run v2 haiku r2
+[13:26] ######## --system v2 --model haiku --split test --tag r3
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v2 / claude-haiku-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 87.1% |
+| Same result as the source | 87.1% |
+| **Verified** (migrated, right, verifiable) | 87.1% (2 with clock columns masked) |
+| Claimed migrated | 87.1% |
+| **Wrong but claimed migrated** | 0 |
+| Handed to a human | 12.9% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 100.0% / 100.0% (must hand back: 11) |
+| Hand-back reason correct | 100.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 0.49 |
+| Seconds / object | 33.4 |
+| $ / object | 0.0006 |
+By estate: A: 82.4% verified of 17, 0 wrong claims, 17.6% handed back (precision 100.0%), $0.0026, B: 74.2% verified of 31, 0 wrong claims, 25.8% handed back (precision 100.0%), $0.017, C: 100.0% verified of 37, 0 wrong claims, 0.0% handed back (precision None%), $0.034
+By kind: query 88.5% verified of 78 (0 wrong claims), etl 83.3% verified of 6 (0 wrong claims), ddl 0.0% verified of 1 (0 wrong claims)
+Truth x decision: | migrated | hb_unconvertible | hb_needs_config | hb_nondeterministic | hb_blocked |
+  convertible      |    72    |        0         |        0        |          0          |     0      |
+  maskable         |    2     |        0         |        0        |          0          |     0      |
+  unconvertible    |    0     |        2         |        0        |          0          |     0      |
+  needs_config     |    0     |        0         |        1        |          0          |     0      |
+  nondeterministic |    0     |        0         |        0        |          5          |     0      |
+  blocked          |    0     |        0         |        0        |          0          |     3      |
+42 calls (4 cached), 105,884 in / 76,103 out tokens, $0.0486  ->  evals/results/v2_haiku_test_r3.json
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 53359)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[14:14] exit=0
+[14:14] committed: test run v2 haiku r3
+[14:14] ######## --system v0-llm --model haiku --split test --tag r2
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v0-llm / claude-haiku-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 89.4% |
+| Same result as the source | 67.1% |
+| **Verified** (migrated, right, verifiable) | 65.9% (0 with clock columns masked) |
+| Claimed migrated | 96.5% |
+| **Wrong but claimed migrated** | 26 |
+| Handed to a human | 3.5% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 66.7% / 18.2% (must hand back: 11) |
+| Hand-back reason correct | 0.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 1 |
+| Seconds / object | 5.2 |
+| $ / object | 0.0008 |
+By estate: A: 58.8% verified of 17, 7 wrong claims, 0.0% handed back (precision None%), $0.0097, B: 51.6% verified of 31, 12 wrong claims, 9.7% handed back (precision 66.7%), $0.0192, C: 81.1% verified of 37, 7 wrong claims, 0.0% handed back (precision None%), $0.0392
+By kind: query 69.2% verified of 78 (21 wrong claims), etl 33.3% verified of 6 (4 wrong claims), ddl 0.0% verified of 1 (1 wrong claims)
+Truth x decision: | migrated | hb_failed |
+  convertible      |    71    |     1     |
+  maskable         |    2     |     0     |
+  unconvertible    |    0     |     2     |
+  needs_config     |    1     |     0     |
+  nondeterministic |    5     |     0     |
+  blocked          |    3     |     0     |
+85 calls (71 cached), 14,742 in / 17,156 out tokens, $0.0101  ->  evals/results/v0-llm_haiku_test_r2.json
+  A_T04 A conver mismatch WRONG-CLAIM     168 of 168 rows differ
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B09   B conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  B14   B conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  B24   B conver error    WRONG-CLAIM     002031 (42601): SQL compilation error: Unsupported subquery type cannot be evaluated at line 1, position 182 (
+  B30   B conver error    WRONG-CLAIM     002031 (42601): SQL compilation error: Unsupported subquery type cannot be evaluated (request_id=7edc478e-fe08
+  B58   B conver mismatch WRONG-CLAIM     56 of 56 rows differ
+  B41   B unconv error    wrong-reason    Hive TRANSFORM pipes rows through the external script 'python3 score_items.py', which Snowflake SQL cannot run
+  B43   B conver mismatch handed-back     Hive hash() is Murmur3 and Snowflake HASH() is a different algorithm, so h and h2 values will differ; the same
+  B65   B unconv error    wrong-reason    Query is otherwise portable, but fiscal_period() is a Hive UDF with no Snowflake equivalent; the SQL is only f
+  B67   B needs_ error    WRONG-CLAIM     source truth unavailable: b67_lake_sales is a temp view. 'MSCK REPAIR TABLE' expects a table..; line 1 pos 18
+  B68   B maskab error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Table 'B68_DAILY' does not exist or not authorized. Your primary role A
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 148
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_T07 A conver mismatch WRONG-CLAIM     22 of 22 rows differ
+  A_R06 A conver mismatch WRONG-CLAIM     row count differs: source 21 vs target 186
+  A_R10 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 10.0 in the target
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 55947)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[14:22] exit=0
+[14:22] committed: test run v0-llm haiku r2
+[14:22] ######## --system v0-llm --model haiku --split test --tag r3
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v0-llm / claude-haiku-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 82.4% |
+| Same result as the source | 57.6% |
+| **Verified** (migrated, right, verifiable) | 56.5% (0 with clock columns masked) |
+| Claimed migrated | 96.5% |
+| **Wrong but claimed migrated** | 34 |
+| Handed to a human | 3.5% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 66.7% / 18.2% (must hand back: 11) |
+| Hand-back reason correct | 0.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 1 |
+| Seconds / object | 9.4 |
+| $ / object | 0.0008 |
+By estate: A: 11.8% verified of 17, 15 wrong claims, 0.0% handed back (precision None%), $0.009, B: 48.4% verified of 31, 13 wrong claims, 9.7% handed back (precision 66.7%), $0.0187, C: 83.8% verified of 37, 6 wrong claims, 0.0% handed back (precision None%), $0.0371
+By kind: query 61.5% verified of 78 (28 wrong claims), etl 0.0% verified of 6 (6 wrong claims), ddl 0.0% verified of 1 (0 wrong claims)
+Truth x decision: | migrated | hb_failed |
+  convertible      |    71    |     1     |
+  maskable         |    2     |     0     |
+  unconvertible    |    1     |     1     |
+  needs_config     |    0     |     1     |
+  nondeterministic |    5     |     0     |
+  blocked          |    3     |     0     |
+85 calls (6 cached), 81,919 in / 100,468 out tokens, $0.0584  ->  evals/results/v0-llm_haiku_test_r3.json
+  A_T01 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Table 'A_AGG_DAILY_SALES' does not exist or not authorized. Your primar
+  A_T04 A conver mismatch WRONG-CLAIM     168 of 168 rows differ
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B09   B conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  B14   B conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  B24   B conver error    WRONG-CLAIM     002031 (42601): SQL compilation error: Unsupported subquery type cannot be evaluated at line 1, position 191 (
+  B26   B conver error    WRONG-CLAIM     002139 (02000): SQL compilation error: Unknown function REGEXP_SPLIT_TO_ARRAY. (request_id=d98f259a-cbb5-46d2-
+  B34   B conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'B34_MIXED' does not exist or not authorized. Your primary role 
+  B58   B conver mismatch WRONG-CLAIM     56 of 56 rows differ
+  B41   B unconv error    wrong-reason    Hive TRANSFORM streams rows through the external script 'python3 score_items.py', which Snowflake cannot run; 
+  B43   B conver mismatch handed-back     Columns, row filter and ordering are preserved, but Hive hash() (Murmur3 32-bit int) and Snowflake HASH() (64-
+  B65   B unconv error    WRONG-CLAIM     source truth unavailable: [UNRESOLVED_ROUTINE] Cannot resolve function `fiscal_period` on search path [`system
+  B67   B needs_ error    wrong-reason    Both statements are dropped: the CREATE EXTERNAL TABLE is DDL for tables that already exist in Snowflake with 
+  B68   B maskab mismatch WRONG-CLAIM     2 of 2 rows differ
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 145
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_T07 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R01 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R06 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R07 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R09 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R02 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R10 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 10.0 in the target
+  A_R16 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R13 A conver mismatch WRONG-CLAIM     row count differs: source 10 vs target 0
+  A_R17 A conver mismatch WRONG-CLAIM     row count differs: source 20 vs target 0
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56118)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[14:36] exit=0
+[14:36] committed: test run v0-llm haiku r3
+[14:36] ######## --system v0-llm --model opus --split test --tag r1
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v0-llm / claude-opus-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 91.8% |
+| Same result as the source | 78.8% |
+| **Verified** (migrated, right, verifiable) | 77.6% (0 with clock columns masked) |
+| Claimed migrated | 96.5% |
+| **Wrong but claimed migrated** | 16 |
+| Handed to a human | 3.5% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 66.7% / 18.2% (must hand back: 11) |
+| Hand-back reason correct | 0.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 1 |
+| Seconds / object | 11.7 |
+| $ / object | 0.0195 |
+By estate: A: 58.8% verified of 17, 7 wrong claims, 0.0% handed back (precision None%), $0.1953, B: 64.5% verified of 31, 8 wrong claims, 9.7% handed back (precision 66.7%), $0.45, C: 97.3% verified of 37, 1 wrong claims, 0.0% handed back (precision None%), $1.0086
+By kind: query 80.8% verified of 78 (12 wrong claims), etl 50.0% verified of 6 (3 wrong claims), ddl 0.0% verified of 1 (1 wrong claims)
+Truth x decision: | migrated | hb_failed |
+  convertible      |    71    |     1     |
+  maskable         |    2     |     0     |
+  unconvertible    |    0     |     2     |
+  needs_config     |    1     |     0     |
+  nondeterministic |    5     |     0     |
+  blocked          |    3     |     0     |
+85 calls (6 cached), 81,919 in / 57,150 out tokens, $1.4707  ->  evals/results/v0-llm_opus_test_r1.json
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B12   B conver mismatch WRONG-CLAIM     2 of 6 rows differ
+  B41   B unconv error    wrong-reason    SELECT TRANSFORM pipes rows through the external script 'python3 score_items.py', and the script's logic is un
+  B43   B conver mismatch handed-back     Hive hash() returns a 32-bit Java-style hashCode (31*h + signed UTF-8 bytes, combined as r*31+h), whereas Snow
+  B65   B unconv error    wrong-reason    fiscal_period is a custom Hive UDF, not a built-in, and its logic is unknown; the SQL above only works if an e
+  B67   B needs_ error    WRONG-CLAIM     source truth unavailable: b67_lake_sales is a temp view. 'MSCK REPAIR TABLE' expects a table..; line 1 pos 18
+  B68   B maskab mismatch WRONG-CLAIM     2 of 2 rows differ
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 161
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_T07 A conver mismatch WRONG-CLAIM     22 of 22 rows differ
+  A_R02 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R10 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 10.0 in the target
+  A_R16 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56359)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[14:53] exit=0
+[14:53] committed: test run v0-llm opus r1
+[14:53] ######## --system v0-llm --model opus --split test --tag r2
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v0-llm / claude-opus-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 90.6% |
+| Same result as the source | 81.2% |
+| **Verified** (migrated, right, verifiable) | 80.0% (0 with clock columns masked) |
+| Claimed migrated | 97.6% |
+| **Wrong but claimed migrated** | 15 |
+| Handed to a human | 2.4% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 100.0% / 18.2% (must hand back: 11) |
+| Hand-back reason correct | 0.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 1 |
+| Seconds / object | 12.0 |
+| $ / object | 0.0202 |
+By estate: A: 58.8% verified of 17, 7 wrong claims, 0.0% handed back (precision None%), $0.197, B: 71.0% verified of 31, 7 wrong claims, 6.5% handed back (precision 100.0%), $0.4803, C: 97.3% verified of 37, 1 wrong claims, 0.0% handed back (precision None%), $1.0381
+By kind: query 82.1% verified of 78 (12 wrong claims), etl 66.7% verified of 6 (2 wrong claims), ddl 0.0% verified of 1 (1 wrong claims)
+Truth x decision: | migrated | hb_failed |
+  convertible      |    72    |     0     |
+  maskable         |    2     |     0     |
+  unconvertible    |    0     |     2     |
+  needs_config     |    1     |     0     |
+  nondeterministic |    5     |     0     |
+  blocked          |    3     |     0     |
+85 calls (6 cached), 81,919 in / 60,193 out tokens, $1.5315  ->  evals/results/v0-llm_opus_test_r2.json
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B41   B unconv error    wrong-reason    SELECT TRANSFORM pipes each row through an external script (python3 score_items.py), and Snowflake has no equi
+  B43   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: parse error line 1 at position 148 near '<EOF>'. syntax error line 1 at
+  B65   B unconv error    wrong-reason    fiscal_period is a custom Hive UDF (not a built-in) whose logic is unknown, so it cannot be faithfully convert
+  B67   B needs_ error    WRONG-CLAIM     source truth unavailable: b67_lake_sales is a temp view. 'MSCK REPAIR TABLE' expects a table..; line 1 pos 18
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 145
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_T07 A conver mismatch WRONG-CLAIM     22 of 22 rows differ
+  A_R02 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R10 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 10.0 in the target
+  A_R16 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56572)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[15:11] exit=0
+[15:11] committed: test run v0-llm opus r2
+[15:11] ######## --system v0-llm --model opus --split test --tag r3
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+## v0-llm / claude-opus-5-5 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 92.9% |
+| Same result as the source | 82.4% |
+| **Verified** (migrated, right, verifiable) | 81.2% (0 with clock columns masked) |
+| Claimed migrated | 96.5% |
+| **Wrong but claimed migrated** | 13 |
+| Handed to a human | 3.5% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | 66.7% / 18.2% (must hand back: 11) |
+| Hand-back reason correct | 0.0% |
+| Dependency-order violations | 0 |
+| Model calls / object | 1 |
+| Seconds / object | 11.6 |
+| $ / object | 0.0195 |
+By estate: A: 70.6% verified of 17, 5 wrong claims, 0.0% handed back (precision None%), $0.2033, B: 64.5% verified of 31, 8 wrong claims, 9.7% handed back (precision 66.7%), $0.4395, C: 100.0% verified of 37, 0 wrong claims, 0.0% handed back (precision None%), $1.0131
+By kind: query 83.3% verified of 78 (10 wrong claims), etl 66.7% verified of 6 (2 wrong claims), ddl 0.0% verified of 1 (1 wrong claims)
+Truth x decision: | migrated | hb_failed |
+  convertible      |    71    |     1     |
+  maskable         |    2     |     0     |
+  unconvertible    |    0     |     2     |
+  needs_config     |    1     |     0     |
+  nondeterministic |    5     |     0     |
+  blocked          |    3     |     0     |
+85 calls (6 cached), 81,919 in / 56,958 out tokens, $1.4668  ->  evals/results/v0-llm_opus_test_r3.json
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B12   B conver mismatch WRONG-CLAIM     2 of 6 rows differ
+  B41   B unconv error    wrong-reason    SELECT TRANSFORM pipes rows through an external script (python3 score_items.py). Snowflake has no equivalent, 
+  B43   B conver mismatch handed-back     Hive hash() returns a 32-bit Java-style hash (31*h + signed byte, null=0, combined as r*31+h), but Snowflake H
+  B65   B unconv error    wrong-reason    fiscal_period is not a built-in Hive function; it is a custom UDF whose logic is unknown, so it cannot be repr
+  B67   B needs_ error    WRONG-CLAIM     source truth unavailable: b67_lake_sales is a temp view. 'MSCK REPAIR TABLE' expects a table..; line 1 pos 18
+  B68   B maskab mismatch WRONG-CLAIM     2 of 2 rows differ
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 162
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     1 of 2 rows differ
+  A_R02 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 1.0 in the target
+  A_R10 A conver mismatch WRONG-CLAIM     order differs at row 1: sort key ss_store_sk is None in the source, 10.0 in the target
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56844)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[15:28] exit=0
+[15:28] committed: test run v0-llm opus r3
+[15:28] ######## --system v0 --split test
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+	... 25 more
+	... 25 more
+	... 25 more
+	... 25 more
+## v0 / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 40.0% |
+| Same result as the source | 30.6% |
+| **Verified** (migrated, right, verifiable) | 29.4% (0 with clock columns masked) |
+| Claimed migrated | 100.0% |
+| **Wrong but claimed migrated** | 60 |
+| Handed to a human | 0.0% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | None% / 0.0% (must hand back: 11) |
+| Hand-back reason correct | None% |
+| Dependency-order violations | 0 |
+| Model calls / object | 0 |
+| Seconds / object | 3.2 |
+| $ / object | 0 |
+By estate: A: 0.0% verified of 17, 17 wrong claims, 0.0% handed back (precision None%), $0, B: 32.3% verified of 31, 21 wrong claims, 0.0% handed back (precision None%), $0, C: 40.5% verified of 37, 22 wrong claims, 0.0% handed back (precision None%), $0
+By kind: query 32.1% verified of 78 (53 wrong claims), etl 0.0% verified of 6 (6 wrong claims), ddl 0.0% verified of 1 (1 wrong claims)
+Truth x decision: | migrated |
+  convertible      |    72    |
+  maskable         |    2     |
+  unconvertible    |    2     |
+  needs_config     |    1     |
+  nondeterministic |    5     |
+  blocked          |    3     |
+0 calls (0 cached), 0 in / 0 out tokens, $0.0000  ->  evals/results/v0_test.json
+  A_T01 A conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 12 at position 9 unexpected 'INT'. (request_id=c01e58
+  A_T04 A conver error    WRONG-CLAIM     000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=41b6d203-16dd-4825-bf3a-bae001450f1a, sfqid=01c
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B01   B conver mismatch WRONG-CLAIM     order differs at row 3: sort key n is -1.0 in the source, None in the target
+  B03   B conver error    WRONG-CLAIM     100038 (22018): Numeric value 'N/A' is not recognized (request_id=f712d65e-09c1-42d8-bcd3-69b27dacb683, sfqid=
+  B05   B conver error    WRONG-CLAIM     002139 (02000): SQL compilation error: Unknown function PMOD. (request_id=b34c6652-3502-4860-939a-c784d2413558
+  B12   B conver error    WRONG-CLAIM     002139 (02000): SQL compilation error: Unknown function STR_TO_UNIX. (request_id=fd68b8fb-d531-429b-b89c-5b938
+  B15   B conver error    WRONG-CLAIM     000904 (42000): SQL compilation error: error line 4 at position 2 invalid identifier 'GROUPING__ID' (request_i
+  B24   B conver mismatch WRONG-CLAIM     80 of 80 rows differ
+  B26   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 16 at position 0 unexpected 'LATERAL'. (request_id=01
+  B28   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 13 at position 0 unexpected 'LATERAL'. syntax error l
+  B30   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 22 at position 0 unexpected 'LATERAL'. (request_id=22
+  B34   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 6 at position 9 unexpected 'INT'. syntax error line 6
+  B58   B conver mismatch WRONG-CLAIM     56 of 56 rows differ
+  B41   B unconv error    WRONG-CLAIM     source truth unavailable: An error occurred while calling o609.collectToPython.
+  B43   B conver mismatch WRONG-CLAIM     50 of 50 rows differ
+  B65   B unconv error    WRONG-CLAIM     source truth unavailable: [UNRESOLVED_ROUTINE] Cannot resolve function `fiscal_period` on search path [`system
+  B67   B needs_ error    WRONG-CLAIM     source truth unavailable: b67_lake_sales is a temp view. 'MSCK REPAIR TABLE' expects a table..; line 1 pos 18
+  B68   B maskab error    WRONG-CLAIM     000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=d8714b98-e74d-45d8-b3dd-bc61fe2b816b, sfqid=01c
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 587
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     1 of 2 rows differ
+  A_T07 A conver error    WRONG-CLAIM     000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=127d66bf-bf9e-4004-955c-afac3c0a4fc7, sfqid=01c
+  A_R01 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R06 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R07 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R09 A conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 11 at position 2 unexpected 'WITH'. (request_id=284ec
+  A_R02 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R10 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R14 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R16 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R18 A maskab error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R13 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_CATEGORY_YEAR' does not exist or not authorized. Your pri
+  A_R17 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_CATEGORY_YEAR' does not exist or not authorized. Your pri
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 57055)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[15:33] exit=0
+[15:33] ######## --system v0-unquoted --split test
+  no reference conversion for upstream A_S05: downstream objects may fail
+provisioned upstream from reference conversions: A_S01, A_S02, A_S05, A_S04, A_T03, A_T05
+	... 25 more
+	... 25 more
+	... 25 more
+	... 25 more
+## v0-unquoted / test (85 objects)
+| Metric | Value |
+|---|---|
+| Executes on Snowflake | 58.8% |
+| Same result as the source | 49.4% |
+| **Verified** (migrated, right, verifiable) | 48.2% (0 with clock columns masked) |
+| Claimed migrated | 100.0% |
+| **Wrong but claimed migrated** | 44 |
+| Handed to a human | 0.0% (0 were fine; 0 refused at triage wrongly) |
+| Hand-back precision / recall | None% / 0.0% (must hand back: 11) |
+| Hand-back reason correct | None% |
+| Dependency-order violations | 0 |
+| Model calls / object | 0 |
+| Seconds / object | 3.3 |
+| $ / object | 0 |
+By estate: A: 0.0% verified of 17, 17 wrong claims, 0.0% handed back (precision None%), $0, B: 32.3% verified of 31, 21 wrong claims, 0.0% handed back (precision None%), $0, C: 83.8% verified of 37, 6 wrong claims, 0.0% handed back (precision None%), $0
+By kind: query 52.6% verified of 78 (37 wrong claims), etl 0.0% verified of 6 (6 wrong claims), ddl 0.0% verified of 1 (1 wrong claims)
+Truth x decision: | migrated |
+  convertible      |    72    |
+  maskable         |    2     |
+  unconvertible    |    2     |
+  needs_config     |    1     |
+  nondeterministic |    5     |
+  blocked          |    3     |
+0 calls (0 cached), 0 in / 0 out tokens, $0.0000  ->  evals/results/v0-unquoted_test.json
+  A_T01 A conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 12 at position 9 unexpected 'INT'. (request_id=4c9804
+  A_T04 A conver error    WRONG-CLAIM     000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=864b5df0-328d-407e-8976-6b1555910330, sfqid=01c
+  A_T06 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  B01   B conver mismatch WRONG-CLAIM     order differs at row 3: sort key n is -1.0 in the source, None in the target
+  B03   B conver error    WRONG-CLAIM     100038 (22018): Numeric value 'N/A' is not recognized (request_id=2290bb77-d9a3-41ae-b2dd-c1a0e46bfd85, sfqid=
+  B05   B conver error    WRONG-CLAIM     002139 (02000): SQL compilation error: Unknown function PMOD. (request_id=9023ab93-34a8-45ef-9d27-ec576422422f
+  B12   B conver error    WRONG-CLAIM     002139 (02000): SQL compilation error: Unknown function STR_TO_UNIX. (request_id=2a856e9e-ad67-43b2-b9dc-50acc
+  B15   B conver error    WRONG-CLAIM     000904 (42000): SQL compilation error: error line 4 at position 2 invalid identifier 'GROUPING__ID' (request_i
+  B24   B conver mismatch WRONG-CLAIM     80 of 80 rows differ
+  B26   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 16 at position 0 unexpected 'LATERAL'. (request_id=45
+  B28   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 13 at position 0 unexpected 'LATERAL'. syntax error l
+  B30   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 22 at position 0 unexpected 'LATERAL'. (request_id=5c
+  B34   B conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 6 at position 9 unexpected 'INT'. syntax error line 6
+  B58   B conver mismatch WRONG-CLAIM     56 of 56 rows differ
+  B41   B unconv error    WRONG-CLAIM     source truth unavailable: An error occurred while calling o609.collectToPython.
+  B43   B conver mismatch WRONG-CLAIM     50 of 50 rows differ
+  B65   B unconv error    WRONG-CLAIM     source truth unavailable: [UNRESOLVED_ROUTINE] Cannot resolve function `fiscal_period` on search path [`system
+  B67   B needs_ error    WRONG-CLAIM     source truth unavailable: b67_lake_sales is a temp view. 'MSCK REPAIR TABLE' expects a table..; line 1 pos 18
+  B68   B maskab error    WRONG-CLAIM     000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=ced7b945-cb96-4f83-9b46-682f05ce556a, sfqid=01c
+  B47   B nondet mismatch WRONG-CLAIM     row count differs: source 150 vs target 571
+  B50   B nondet match    WRONG-CLAIM     20 rows, 3 columns match
+  B52   B nondet mismatch WRONG-CLAIM     32 of 46 rows differ
+  B56   B nondet mismatch WRONG-CLAIM     1 of 1 rows differ
+  B70   B nondet mismatch WRONG-CLAIM     1 of 2 rows differ
+  A_T07 A conver error    WRONG-CLAIM     000002 (0A000): Unsupported feature 'FILE_FORMAT'. (request_id=fe7bc0a7-2e57-40a0-86f7-f511b67eea8a, sfqid=01c
+  A_R01 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R06 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R07 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_DAILY_SALES' does not exist or not authorized. Your prima
+  A_R09 A conver error    WRONG-CLAIM     001003 (42000): SQL compilation error: syntax error line 11 at position 2 unexpected 'WITH'. (request_id=b6d38
+  A_R02 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R10 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R14 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R16 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R18 A maskab error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_STORE_MONTH' does not exist or not authorized. Your prima
+  A_R11 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R12 A blocke error    WRONG-CLAIM     source truth unavailable: upstream 'CREATE VIEW a_stg_store AS\nSELECT s_stor' failed: [UNRESOLVED_ROUTINE] Ca
+  A_R13 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_CATEGORY_YEAR' does not exist or not authorized. Your pri
+  A_R17 A conver error    WRONG-CLAIM     002003 (42S02): SQL compilation error: Object 'A_AGG_CATEGORY_YEAR' does not exist or not authorized. Your pri
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 57220)
+    self.process_request(request, client_address)
+    self.finish_request(request, client_address)
+    self.RequestHandlerClass(request, client_address, self)
+    self.handle()
+    poll(accum_updates)
+    if self.rfile in r and func():
+    num_updates = read_int(self.rfile)
+    length = stream.read(4)
+    return self._sock.recv_into(b)
+----------------------------------------
+[15:39] exit=0
+[15:39] committed: test runs v0 and v0+
+[15:39] ######## reevaluate r1 A_T01 (transport error)
+A_T01: error -> match  in-warehouse: 109,722 rows, 9 columns' aggregates match; 500-row ordered sample matches
+aggregate: verified 87.1%, wrong claims 0, precision 100.0% / recall 100.0%
+[15:39] committed: v2 test r1: A_T01 re-measured after a Snowflake transport error
+[15:39] ######## mutation
+# Mutation test of the verifier
+Source run: `evals/results/v2_haiku_test_r1.json`; 74 verified objects; 189 mutations applied.
+| Mutation | Applied | Caught | Catch rate |
+|---|---|---|---|
+| drop_nulls_first | 55 | 16 | 29% |
+| try_cast_to_cast | 5 | 1 | 20% |
+| between_off_by_one | 21 | 10 | 48% |
+| coalesce_zero_dropped | 1 | 0 | 0% |
+| drop_distinct | 8 | 4 | 50% |
+| round_scale | 7 | 4 | 57% |
+| flatten_type | 4 | 3 | 75% |
+| sum_to_avg | 48 | 40 | 83% |
+| inner_to_left | 40 | 37 | 92% |
+**Overall: 115 of 189 mutations caught (61%).**
+Survivors (mutation did not change the compared result on this data, or was not semantically different here): A_T01:inner_to_left, B01:drop_nulls_first, B01:between_off_by_one, B03:drop_nulls_first, B05:drop_nulls_first, B05:between_off_by_one, B07:drop_nulls_first, B07:between_off_by_one, B12:drop_nulls_first, B14:drop_distinct, B14:sum_to_avg, B15:drop_nulls_first, B15:between_off_by_one, B17:drop_nulls_first, B18:drop_nulls_first, B24:drop_nulls_first, B24:flatten_type, B26:drop_nulls_first, B28:drop_nulls_first, B30:drop_nulls_first, B32:between_off_by_one, B34:drop_nulls_first, B34:inner_to_left, B36:drop_nulls_first, B36:inner_to_left, B37:drop_nulls_first, B37:between_off_by_one, B38:drop_nulls_first, B38:between_off_by_one, B57:drop_nulls_first, B57:between_off_by_one, Q02:drop_nulls_first, Q04:drop_nulls_first, Q04:sum_to_avg, Q05:try_cast_to_cast, Q09:between_off_by_one, Q16:drop_distinct, Q16:sum_to_avg, Q17:drop_nulls_first, Q20:drop_nulls_first, Q20:try_cast_to_cast, Q22:drop_nulls_first, Q36:drop_nulls_first, Q45:sum_to_avg, Q49:drop_nulls_first, Q49:coalesce_zero_dropped, Q49:sum_to_avg, Q51:drop_nulls_first, Q51:between_off_by_one, Q57:drop_nulls_first, Q62:drop_nulls_first, Q66:drop_nulls_first, Q66:between_off_by_one, Q71:drop_nulls_first, Q76:drop_nulls_first, Q84:drop_nulls_first, Q86:drop_nulls_first, Q94:try_cast_to_cast, Q94:drop_distinct, Q94:sum_to_avg, Q95:try_cast_to_cast, Q95:drop_distinct, Q95:sum_to_avg, Q98:drop_nulls_first, Q99:drop_nulls_first, A_T07:drop_nulls_first, A_R01:drop_nulls_first, A_R01:round_scale, A_R06:drop_nulls_first, A_R07:drop_nulls_first, A_R07:round_scale, A_R07:sum_to_avg, A_R09:round_scale, A_R14:drop_nulls_first
+# Ablation - dev split (one run each)
+| Variant | Verified | Wrong but claimed migrated | Handed to a human | Hand-back precision / recall | Order violations | Calls/object | $/object |
+|---|---|---|---|---|---|---|---|
+| **v2 (all steps)** | 87.6% | 0 | 12.4% | 91.7% / 100.0% | 0 | 0.64 | $0.0006 |
+| v2 without triage (every object converted) | 86.6% | 2 | 11.3% | 81.8% / 81.8% | 0 | 0.87 | $0.0010 |
+| v2 without source probes (rules only, no tie / double-run checks) | 86.6% | 0 | 13.4% | 84.6% / 100.0% | 0 | 0.64 | $0.0006 |
+| v2 without dependency ordering (file order, no re-verification) | 82.5% | 0 | 17.5% | 64.7% / 100.0% | 5 | 0.79 | $0.0008 |
+| v2 without dependency ordering, with re-verification | 82.5% | 0 | 17.5% | 64.7% / 100.0% | 5 | 0.8 | $0.0008 |
+| v1 per-object agent (reference) | 84.5% | 2 | 13.4% | 69.2% / 81.8% | 0 | 0.88 | $0.0008 |
+| v0 sqlglot (reference) | 30.9% | 67 | 0.0% | None% / 0.0% | 0 | 0 | $0.0000 |
+| v0+ sqlglot unquoted (reference) | 55.7% | 43 | 0.0% | None% / 0.0% | 0 | 0 | $0.0000 |
+| v0-LLM Haiku (reference) | 63.9% | 30 | 5.2% | 80.0% / 36.4% | 0 | 1 | $0.0008 |
+| v0-LLM Opus (reference) | 80.4% | 15 | 4.1% | 100.0% / 36.4% | 0 | 1 | $0.0196 |
+# Final results - test split
+85 held-out migration objects (queries, ETL scripts, DDL) never used while building; model systems run 3 times independently; mean (range); [95% Wilson interval] on the headline rates. Source = local Spark SQL standing in for Hive; Hive write statements run through an in-memory emulator on the source (see README notes).
+| Metric | v0 - sqlglot (rule-based) | v0+ - sqlglot, identifiers unquoted | v0-LLM - Haiku 5.5, one call | v0-LLM - Opus 5.5, one call | v1 - per-object agent, Haiku 5.5 | v2 - estate agent, Haiku 5.5 |
+|---|---|---|---|---|---|---|
+| Executes on Snowflake | 40% | 59% | 84% (81%-89%) | 92% (91%-93%) | 91% (89%-92%) | 87% (86%-87%) |
+| Same result as the source | 31% [22-41] | 49% [39-60] | 63% (58%-67%) [52-72] | 81% (79%-82%) [71-88] | 84% (78%-87%) [75-90] | 87% (86%-87%) [78-92] |
+| **Verified** (migrated, right, verifiable) | 29% [21-40] | 48% [38-59] | 62% (56%-66%) [51-71] | 80% (78%-81%) [70-87] | 80% (73%-84%) [70-87] | 87% (86%-87%) [78-92] |
+| Claimed migrated | 100% | 100% | 96% | 97% (96%-98%) | 83% (76%-86%) | 87% (86%-87%) |
+| **Wrong but claimed migrated** | 60 | 44 | 29.7 (26-34) | 14.7 (13-16) | 2.7 (2-3) | 0 |
+| Handed to a human | 0% | 0% | 4% | 3% (2%-4%) | 17% (14%-24%) | 13% (13%-14%) |
+| ...of which were actually fine | 0 | 0 | 0 | 0 | 1.7 (1-2) | 0 |
+| ...of which refused at triage wrongly | 0 | 0 | 0 | 0 | 0 | 0 |
+| Hand-back precision | - | - | 67% | 78% (67%-100%) | 65% (45%-75%) | 97% (92%-100%) |
+| Hand-back recall | 0% | 0% | 18% | 18% | 82% | 100% |
+| Hand-back reason correct | - | - | 0% | 0% | 0% | 100% |
+| Verified with clock columns masked | 0 | 0 | 0 | 0 | 0 | 2 |
+| Dependency-order violations | 0 | 0 | 0 | 0 | 0 | 0 |
+| Model calls / object | 0.0 | 0.0 | 1.0 | 1.0 | 0.8 (0.7-0.9) | 0.5 (0.5-0.5) |
+| Seconds / object | 3 | 3 | 8 (5-10) | 12 (12-12) | 20 (20-21) | 48 (33-79) |
+| $ / object | $0.0000 | $0.0000 | $0.0008 | $0.0197 ($0.0195-$0.0202) | $0.0008 ($0.0007-$0.0009) | $0.0006 |
+By estate: verified % (wrong-but-claimed-migrated count):
+| estate | v0 - sqlglot (rule-based) | v0+ - sqlglot, identifiers unquoted | v0-LLM - Haiku 5.5, one call | v0-LLM - Opus 5.5, one call | v1 - per-object agent, Haiku 5.5 | v2 - estate agent, Haiku 5.5 |
+|---|---|---|---|---|---|---|
+| A (n=17) | 0% (17) | 0% (17) | 29% (12%-59%) (12 (7-15)) | 63% (59%-71%) (6.3 (5-7)) | 61% (29%-76%) (0.3 (0-1)) | 82% (0) |
+| B (n=31) | 32% (21) | 32% (21) | 53% (48%-58%) (11.7 (10-13)) | 67% (64%-71%) (7.7 (7-8)) | 67% (64%-68%) (2.3 (2-3)) | 73% (71%-74%) (0) |
+| C (n=37) | 40% (22) | 84% (6) | 84% (81%-86%) (6 (5-7)) | 98% (97%-100%) (0.7 (0-1)) | 99% (97%-100%) (0) | 100% (0) |
+By kind: verified % (wrong-but-claimed-migrated count):
+| kind | v0 - sqlglot (rule-based) | v0+ - sqlglot, identifiers unquoted | v0-LLM - Haiku 5.5, one call | v0-LLM - Opus 5.5, one call | v1 - per-object agent, Haiku 5.5 | v2 - estate agent, Haiku 5.5 |
+|---|---|---|---|---|---|---|
+| ddl (n=1) | 0% (1) | 0% (1) | 0% (0.7 (0-1)) | 0% (1) | 0% (0) | 0% (0) |
+| etl (n=6) | 0% (6) | 0% (6) | 17% (0%-33%) (5 (4-6)) | 61% (50%-67%) (2.3 (2-3)) | 50% (33%-67%) (0.7 (0-1)) | 83% (0) |
+| query (n=78) | 32% (53) | 53% (37) | 66% (62%-69%) (24 (21-28)) | 82% (81%-83%) (11.3 (10-12)) | 83% (77%-86%) (2) | 88% (87%-88%) (0) |
+By truth category: verified % (wrong-but-claimed-migrated count):
+| truth category | v0 - sqlglot (rule-based) | v0+ - sqlglot, identifiers unquoted | v0-LLM - Haiku 5.5, one call | v0-LLM - Opus 5.5, one call | v1 - per-object agent, Haiku 5.5 | v2 - estate agent, Haiku 5.5 |
+|---|---|---|---|---|---|---|
+| blocked (n=3) | 0% (3) | 0% (3) | 0% (3) | 0% (3) | 0% (0) | 0% (0) |
+| convertible (n=72) | 35% (47) | 57% (31) | 71% (65%-76%) (19.7 (16-24)) | 92% (90%-94%) (5 (3-6)) | 94% (86%-99%) (0.7 (0-1)) | 100% (99%-100%) (0) |
+| maskable (n=2) | 0% (2) | 0% (2) | 50% (1) | 67% (50%-100%) (0.7 (0-1)) | 0% (0) | 100% (0) |
+| needs_config (n=1) | 0% (1) | 0% (1) | 0% (0.7 (0-1)) | 0% (1) | 0% (0) | 0% (0) |
+| nondeterministic (n=5) | 0% (5) | 0% (5) | 0% (5) | 0% (5) | 0% (2) | 0% (0) |
+| unconvertible (n=2) | 0% (2) | 0% (2) | 0% (0.3 (0-1)) | 0% (0) | 0% (0) | 0% (0) |
+Runs available: v0 x1, v0-unquoted x1, v0-llm_haiku x3, v0-llm_opus x3, v1_haiku x3, v2_haiku x3
+[15:44] committed: mutation test and final tables
+[15:44] chain done
